@@ -6,28 +6,52 @@
 
 RustForge is a modular, easily adoptable Rust test-suite template that scales from basic `cargo test` workflows to compiler-style coverage.
 
-## Features
+## Why RustForge?
 
-- **Modular by design** — seven independent category crates (`syntax`,
+Most Rust projects eventually build their own test infrastructure —
+stitching together `cargo test`, Criterion, `proptest`, `cargo-fuzz`,
+`trybuild`, `insta`, `cargo-llvm-cov`, and the CI wiring to run all of it
+consistently. RustForge is that infrastructure, already built, already
+wired into CI, and verified to actually work end-to-end — a starting
+point, not a skeleton you fill in yourself.
+
+### What makes it different
+
+- **Truly modular** — seven independent category crates (`syntax`,
   `semantic`, `performance`, `fuzz`, `integration`, `edge-cases`, plus
-  shared `core-tests`); adopt only the categories you need.
-- **Dependency-light by default** — `cargo test --workspace` pulls in zero
-  extra dependencies. Heavier tooling (Tokio, Criterion, proptest,
-  trybuild) is opt-in per feature flag; see [Feature Flags](#feature-flags).
-- **Real advanced tooling, not stubs** — a working `cargo-fuzz` target,
-  Criterion benchmarks with a regression guard, `proptest` property tests,
-  and `trybuild` compile-fail tests all actually run in CI.
-- **MSRV-aware** — a dedicated CI job verifies the default build against
-  the declared `rust-version`, not just a documentation promise.
-- **Supply-chain hygiene from day one** — `cargo-deny` (licenses,
-  advisories, banned/duplicate dependencies, untrusted sources) and
-  Dependabot are wired into CI, not bolted on later.
-- **Documented by policy** — every public item is documented, and
-  `#![warn(missing_docs)]` is enforced as a hard CI error.
-- **A real 7-job CI pipeline** — fmt, clippy, and tests across
-  stable/beta/nightly, a stable-only compile-fail job, a nightly
-  fuzz-build job, an MSRV job, and a dependency-hygiene job. See
-  [`ci/README.md`](ci/README.md).
+  shared `core-tests`); adopt only what you need. `cargo test --workspace`
+  pulls in zero extra dependencies by default — heavier tooling (Tokio,
+  Criterion, `proptest`, `trybuild`, `insta`) is opt-in per feature flag,
+  see [Feature Flags](#feature-flags).
+- **Comprehensive by design** — syntax and compile-fail tests, ownership/
+  semantic correctness, Criterion benchmarks with regression guards (plus
+  [statistical baseline comparison](docs/performance-regression-testing.md)),
+  fuzzing (in-process `proptest` and real `cargo-fuzz` targets, with a
+  [corpus management guide](docs/fuzzing.md)), snapshot testing, boundary/
+  edge-case checks, and cross-category integration tests. Every one of
+  these actually runs in CI, not just in a README example.
+- **Production-grade from day one** — multi-toolchain, multi-OS CI; MSRV
+  verified by a dedicated job, not just claimed; `cargo-deny` supply-chain
+  checks; Dependabot for both the main and detached `fuzz/` workspaces;
+  `#![warn(missing_docs)]` enforced as a hard CI error; issue/PR templates
+  and a contributor checklist. See [Tooling & Automation](#tooling--automation)
+  for the full list.
+- **Easy to adopt, no lock-in** — a template, not a framework. Use it as a
+  GitHub template repo, copy `crates/` into an existing workspace (see the
+  Quickstart above for the one real gotcha we found by actually testing
+  that flow), or take individual crates — most depend only on shared
+  `core-tests`, nothing else.
+- **Scales with you** — start with `syntax`/`semantic`/`integration` on a
+  small library; grow into fuzzing, property-based testing, and
+  regression-guarded benchmarks as the project's rigor requirements grow.
+
+### Who it's for
+
+- Library authors who want test coverage adopters can trust
+- Teams building production Rust services who'd rather not assemble this
+  tooling from scratch
+- Anyone who'd rather start from a working, CI-verified baseline than
+  bootstrap one
 
 ## Workspace Layout
 
@@ -74,7 +98,7 @@ cargo test --workspace
 ## Module Responsibilities
 
 - `core-tests`: shared fixtures/helpers for reusable assertions and builders.
-- `syntax-tests`: parser/syntax-facing tests (compile-fail/pass tools can be layered in).
+- `syntax-tests`: parser/syntax-facing tests — compile-fail/pass (`trybuild`) and snapshot (`insta`) tests included.
 - `semantic-tests`: ownership, borrowing, traits, and async semantics.
 - `performance-tests`: benchmark/perf guard entry points.
 - `fuzz-tests`: fuzz harness-friendly entry points.
