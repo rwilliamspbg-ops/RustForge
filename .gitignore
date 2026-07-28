@@ -1,1 +1,6 @@
 /target/
+
+# cargo-fuzz build artifacts (fuzz/ is a detached workspace)
+/fuzz/target/
+/fuzz/corpus/
+/fuzz/artifacts/

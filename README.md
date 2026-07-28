@@ -1,5 +1,8 @@
 # RustForge
 
+[![CI](https://github.com/rwilliamspbg-ops/RustForge/actions/workflows/ci.yml/badge.svg)](https://github.com/rwilliamspbg-ops/RustForge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 RustForge is a modular, easily adoptable Rust test-suite template that scales from basic `cargo test` workflows to compiler-style coverage.
 
 ## Workspace Layout
@@ -45,11 +48,36 @@ cargo test --workspace
 - `integration-tests`: end-to-end behavior tests across categories.
 - `edge-cases`: boundary-value and robustness checks.
 
+## Feature Flags
+
+Optional, dependency-pulling tooling is gated behind Cargo features so
+`cargo test --workspace` stays fast by default. Opt in per crate or with
+`--all-features`:
+
+| Crate | Feature | Adds | What it unlocks |
+| --- | --- | --- | --- |
+| `core-tests` | `async` | — | reserved for async fixture helpers |
+| `core-tests` | `no_std` | — | `core`-only helper module (`no_std_support`) |
+| `semantic-tests` | `async` | `tokio` | an async ownership test (`cargo test -p semantic-tests --features async`) |
+| `performance-tests` | `perf` | `criterion` | `cargo bench -p performance-tests --features perf` |
+| `fuzz-tests` | `fuzz` | `proptest` | property tests (`cargo test -p fuzz-tests --features fuzz`) |
+| `edge-cases` | `edge` | — | reserved for additional boundary-value helpers |
+
+The real `cargo-fuzz` scaffold lives in [`fuzz/`](fuzz), which is a detached
+workspace (see [`fuzz/README.md`](fuzz/README.md)) since fuzzing needs
+nightly and its own dependency resolution. Build it with:
+
+```bash
+cd fuzz && cargo +nightly fuzz build
+```
+
 ## Tooling & Automation
 
 - Native `cargo test` is first-class.
-- CI workflow includes `fmt`, `clippy`, and workspace tests on stable/beta/nightly.
-- Optional ecosystem tools can be layered in incrementally (`cargo-nextest`, `trybuild`, `criterion`, `cargo-fuzz`, `cargo-llvm-cov`).
+- CI workflow includes `fmt`, `clippy`, and workspace tests on stable/beta/nightly, plus a nightly `fuzz-build` job. See [`ci/README.md`](ci/README.md).
+- `scripts/check.sh` mirrors the CI gate locally; `scripts/coverage.sh` generates an HTML coverage report. See [`scripts/README.md`](scripts/README.md).
+- Runnable examples live under each crate's `examples/` directory, e.g. `cargo run -p core-tests --example fixture_walkthrough`. See [`examples/README.md`](examples/README.md).
+- Optional ecosystem tools are layered in incrementally behind features above (`criterion`, `proptest`, `cargo-fuzz`, `tokio`); add `cargo-nextest` or `trybuild` the same way as your suite grows.
 
 ## Coverage, Reporting, and Debugging
 
@@ -68,3 +96,8 @@ Recommended defaults:
 5. Polish: expand docs/examples and maintain contributor checklist.
 
 See `docs/adoption.md` for incremental rollout guidance.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the contributor checklist and
+guidance on adding new test categories. Released under the [MIT license](LICENSE).

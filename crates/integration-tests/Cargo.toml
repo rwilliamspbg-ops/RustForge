@@ -7,6 +7,9 @@ edition = "2021"
 core-tests = { path = "../core-tests" }
 semantic-tests = { path = "../semantic-tests" }
 syntax-tests = { path = "../syntax-tests" }
+edge-cases = { path = "../edge-cases" }
+fuzz-tests = { path = "../fuzz-tests" }
+performance-tests = { path = "../performance-tests" }
 
 [features]
 default = ["integration"]

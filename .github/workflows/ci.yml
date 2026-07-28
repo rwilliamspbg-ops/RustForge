@@ -28,6 +28,21 @@ jobs:
       - name: fmt
         run: cargo fmt --all --check
       - name: clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: tests
-        run: cargo test --workspace
+        run: cargo test --workspace --all-features
+
+  fuzz-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust (nightly)
+        uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fuzz -> target
+      - name: install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+      - name: build fuzz targets
+        working-directory: fuzz
+        run: cargo fuzz build

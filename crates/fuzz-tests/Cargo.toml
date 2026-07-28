@@ -3,6 +3,9 @@ name = "fuzz-tests"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+proptest = { version = "1", optional = true }
+
 [features]
 default = []
-fuzz = []
+fuzz = ["dep:proptest"]

@@ -5,7 +5,9 @@ edition = "2021"
 
 [dependencies]
 core-tests = { path = "../core-tests" }
+tokio = { version = "1", features = ["rt", "macros", "sync"], optional = true }
 
 [features]
 default = ["semantic"]
 semantic = []
+async = ["dep:tokio"]

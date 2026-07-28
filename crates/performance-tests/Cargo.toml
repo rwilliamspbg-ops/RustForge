@@ -3,6 +3,14 @@ name = "performance-tests"
 version = "0.1.0"
 edition = "2021"
 
+[dev-dependencies]
+criterion = "0.5"
+
 [features]
 default = []
 perf = []
+
+[[bench]]
+name = "sum_bench"
+harness = false
+required-features = ["perf"]
