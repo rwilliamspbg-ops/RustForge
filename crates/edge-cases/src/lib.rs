@@ -23,6 +23,25 @@ pub fn safe_truncate(input: &str, max: usize) -> &str {
     &input[..boundary]
 }
 
+/// Stricter arithmetic boundary checks, opt-in via the `edge` feature for
+/// suites that want to assert against `usize` underflow/overflow explicitly
+/// rather than relying on debug-only panics.
+#[cfg(feature = "edge")]
+pub mod overflow_checks {
+    /// Subtracts `b` from `a`, returning `None` instead of underflowing —
+    /// the classic `usize` boundary bug (`a - b` panics in debug builds and
+    /// silently wraps in release builds when `a < b`).
+    pub fn checked_distance(a: usize, b: usize) -> Option<usize> {
+        a.checked_sub(b)
+    }
+
+    /// Adds `delta` to `base`, returning `None` instead of silently wrapping
+    /// past `usize::MAX`.
+    pub fn checked_offset(base: usize, delta: usize) -> Option<usize> {
+        base.checked_add(delta)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{clamp_len, safe_truncate};
@@ -58,5 +77,22 @@ mod tests {
     #[test]
     fn safe_truncate_handles_empty_input() {
         assert_eq!(safe_truncate("", 4), "");
+    }
+
+    #[cfg(feature = "edge")]
+    mod overflow_tests {
+        use super::super::overflow_checks::{checked_distance, checked_offset};
+
+        #[test]
+        fn checked_distance_rejects_underflow() {
+            assert_eq!(checked_distance(5, 3), Some(2));
+            assert_eq!(checked_distance(0, 1), None);
+        }
+
+        #[test]
+        fn checked_offset_rejects_overflow_at_usize_max() {
+            assert_eq!(checked_offset(usize::MAX - 1, 1), Some(usize::MAX));
+            assert_eq!(checked_offset(usize::MAX, 1), None);
+        }
     }
 }

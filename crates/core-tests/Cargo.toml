@@ -1,9 +1,14 @@
 [package]
 name = "core-tests"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+tokio = { version = "1", features = ["rt", "macros"], optional = true }
 
 [features]
 default = []
-async = []
+async = ["dep:tokio"]
 no_std = []

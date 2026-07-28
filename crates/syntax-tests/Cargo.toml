@@ -1,7 +1,9 @@
 [package]
 name = "syntax-tests"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 core-tests = { path = "../core-tests" }

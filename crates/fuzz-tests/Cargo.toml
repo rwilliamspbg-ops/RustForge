@@ -1,10 +1,14 @@
 [package]
 name = "fuzz-tests"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [dependencies]
-proptest = { version = "1", optional = true }
+# Pinned to the 1.8 line (rust-version 1.74) to stay within the workspace's
+# declared MSRV; proptest 1.9+ requires rustc 1.82+.
+proptest = { version = "~1.8", optional = true }
 
 [features]
 default = []

@@ -19,11 +19,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Runnable examples under `crates/core-tests/examples` and
   `crates/syntax-tests/examples`.
 - `scripts/check.sh` and `scripts/coverage.sh` local developer helpers.
+- `async` feature on `core-tests` adding async-friendly fixture helpers
+  (`async_support::default_user_fixture_async`, concurrent fixture loading).
+- `edge` feature on `edge-cases` adding checked-arithmetic boundary helpers
+  (`overflow_checks::checked_distance`/`checked_offset`).
+- `rust-version`/`license`/`edition` now flow from `[workspace.package]` into
+  every crate via `.workspace = true`, instead of being unused root-level
+  metadata.
 
 ### Changed
 
 - CI now runs clippy and tests with `--all-features` so feature-gated code
   paths are checked on every push/PR.
+- Pinned `proptest` to the `~1.8` line in `fuzz-tests`; unconstrained `"1"`
+  had resolved to 1.11, which requires rustc 1.85 and silently broke the
+  workspace's declared `rust-version = "1.75"` whenever the `fuzz` feature
+  was enabled.
+- `[workspace.metadata.rustforge].optional_categories` renamed
+  `"performance"`/`"edge-cases"` to `"perf"`/`"edge"` to match the actual
+  Cargo feature flag names on those crates.
+
+### Fixed
+
+- Root `fuzz/README.md` no longer describes an empty placeholder directory
+  now that a real `cargo-fuzz` scaffold lives there.
 
 ## [0.1.0] - 2026-01-01
 

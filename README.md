@@ -36,7 +36,8 @@ my-test-suite/
 cargo test --workspace
 ```
 
-4. Opt into advanced categories (`performance`, `fuzz`, `edge-cases`) as needed.
+4. Opt into advanced categories (`performance-tests`, `fuzz-tests`, `edge-cases`) and their
+   feature flags (`perf`, `fuzz`, `edge`) as needed — see [Feature Flags](#feature-flags) below.
 
 ## Module Responsibilities
 
@@ -56,12 +57,12 @@ Optional, dependency-pulling tooling is gated behind Cargo features so
 
 | Crate | Feature | Adds | What it unlocks |
 | --- | --- | --- | --- |
-| `core-tests` | `async` | — | reserved for async fixture helpers |
+| `core-tests` | `async` | `tokio` | async fixture helpers (`async_support::default_user_fixture_async`, concurrent fixture loading) |
 | `core-tests` | `no_std` | — | `core`-only helper module (`no_std_support`) |
 | `semantic-tests` | `async` | `tokio` | an async ownership test (`cargo test -p semantic-tests --features async`) |
 | `performance-tests` | `perf` | `criterion` | `cargo bench -p performance-tests --features perf` |
 | `fuzz-tests` | `fuzz` | `proptest` | property tests (`cargo test -p fuzz-tests --features fuzz`) |
-| `edge-cases` | `edge` | — | reserved for additional boundary-value helpers |
+| `edge-cases` | `edge` | — | checked-arithmetic boundary helpers (`overflow_checks`) guarding `usize` under/overflow |
 
 The real `cargo-fuzz` scaffold lives in [`fuzz/`](fuzz), which is a detached
 workspace (see [`fuzz/README.md`](fuzz/README.md)) since fuzzing needs
@@ -70,6 +71,24 @@ nightly and its own dependency resolution. Build it with:
 ```bash
 cd fuzz && cargo +nightly fuzz build
 ```
+
+### MSRV
+
+The workspace declares `rust-version = "1.75"` — that's the floor for the
+**default** build of every crate (no extra features). Optional features that
+pull in actively-developed ecosystem tooling can need a newer toolchain
+independently of this template, since those crates set their own MSRV:
+
+- `fuzz-tests`'s `fuzz` feature pins `proptest` to the `~1.8` line
+  specifically to stay within 1.75 (proptest 1.9+ needs rustc 1.82+).
+- `performance-tests`'s `perf` feature depends on `criterion`, whose own
+  dependency chain (`clap`, `regex`, `plotters`, ...) tracks current stable
+  Rust and can exceed 1.75. Use a recent stable toolchain when running
+  `cargo bench`.
+
+CI's `test` job runs on stable/beta/nightly with `--all-features`, so it
+will surface any future MSRV drift on those toolchains even though it
+doesn't pin to 1.75 explicitly.
 
 ## Tooling & Automation
 
