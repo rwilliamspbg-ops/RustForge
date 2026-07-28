@@ -1,0 +1,4 @@
+# Keeps clippy's suggestions consistent with the workspace's declared MSRV
+# (see [workspace.package] in Cargo.toml) — it won't suggest idioms that
+# only work on newer Rust.
+msrv = "1.75"

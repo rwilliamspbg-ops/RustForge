@@ -1,12 +1,18 @@
 [package]
 name = "integration-tests"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
 
 [dependencies]
 core-tests = { path = "../core-tests" }
 semantic-tests = { path = "../semantic-tests" }
 syntax-tests = { path = "../syntax-tests" }
+edge-cases = { path = "../edge-cases" }
+fuzz-tests = { path = "../fuzz-tests" }
+performance-tests = { path = "../performance-tests" }
 
 [features]
 default = ["integration"]

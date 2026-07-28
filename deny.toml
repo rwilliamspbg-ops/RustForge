@@ -1,0 +1,52 @@
+# cargo-deny configuration: https://embarkstudios.github.io/cargo-deny/
+#
+# Run locally with:
+#   cargo install cargo-deny --locked
+#   cargo deny check
+
+[graph]
+targets = []
+# Scan the full graph — every feature (async/no_std/perf/fuzz) and every
+# dev-dependency (criterion, proptest, tokio) — not just the default build,
+# so `cargo deny check` matches what `--all-features` CI actually compiles.
+all-features = true
+exclude-dev = false
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = []
+
+[licenses]
+version = 2
+# Trimmed to what's actually present across the full dependency graph
+# (verified with `cargo deny list`); cargo-deny errors loudly if a new
+# dependency brings in something not on this list, so extending it is a
+# deliberate, visible decision rather than silent scope creep.
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "Unicode-3.0",
+  # Pulled in by fuzz/'s libfuzzer-sys, which bundles LLVM sanitizer runtime
+  # bits under the University of Illinois/NCSA license (permissive, OSI- and
+  # FSF-approved).
+  "NCSA",
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# Our own in-workspace path dependencies (crates/*) intentionally omit a
+# `version` field — they're not published, so there's no ambiguous version
+# to pin. Without this, cargo-deny flags every path dependency as a risky
+# unconstrained "wildcard".
+allow-wildcard-paths = true
+deny = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

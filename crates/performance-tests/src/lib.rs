@@ -1,5 +1,12 @@
+//! Benchmark/perf-guard entry points. `sum` is deliberately trivial — the
+//! interesting parts are the two ways it's exercised: a cheap `#[ignore]`d
+//! wall-clock regression guard here (always available, no extra deps), and
+//! a proper Criterion benchmark under `benches/` (opt-in via the `perf`
+//! feature, see `cargo bench -p performance-tests --features perf`).
 #![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
+/// Sums a slice of `u64`s.
 pub fn sum(values: &[u64]) -> u64 {
     values.iter().copied().sum()
 }

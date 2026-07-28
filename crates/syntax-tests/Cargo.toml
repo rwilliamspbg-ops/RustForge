@@ -1,11 +1,19 @@
 [package]
 name = "syntax-tests"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
 
 [dependencies]
 core-tests = { path = "../core-tests" }
+# Exact-pinned (not "~1.0.111") to 1.0.111 (rust-version 1.70): later 1.0.x
+# patches (112+) already require rustc 1.76+, past the workspace's MSRV, so
+# a tilde requirement would still float past it.
+trybuild = { version = "=1.0.111", optional = true }
 
 [features]
 default = ["syntax"]
 syntax = []
+compile-fail = ["dep:trybuild"]

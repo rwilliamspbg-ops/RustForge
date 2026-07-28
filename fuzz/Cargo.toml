@@ -1,0 +1,27 @@
+[package]
+name = "fuzz-tests-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+license = "MIT"
+
+# Detach from the parent workspace: cargo-fuzz targets need nightly and a
+# distinct dependency resolution, so they should never be built as part of
+# `cargo test --workspace` / `cargo build --workspace`.
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.fuzz-tests]
+path = "../crates/fuzz-tests"
+
+[[bin]]
+name = "utf8_input"
+path = "fuzz_targets/utf8_input.rs"
+test = false
+doc = false
+bench = false

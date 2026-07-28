@@ -1,0 +1,8 @@
+# Stable-channel-only options, since CI runs `cargo fmt --all --check` on
+# stable, beta, and nightly alike.
+edition = "2021"
+max_width = 100
+newline_style = "Unix"
+use_small_heuristics = "Default"
+reorder_imports = true
+reorder_modules = true

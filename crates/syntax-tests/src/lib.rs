@@ -1,5 +1,16 @@
+//! Parser/syntax-facing tests. `parse_source` is a deliberately toy stand-in
+//! for a real parser's front door — swap it for your own tokenizer/parser
+//! entry point and keep the pass/fail test shape. For genuine compile-fail
+//! testing (checking that some input fails to *compile*, not just that a
+//! function returns `Err`), see the `compile-fail` feature and
+//! `tests/compile_fail.rs`.
 #![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
+/// Validates that `source` is non-empty and contains a function declaration.
+///
+/// Returns the trimmed source on success, or a static error message
+/// describing which check failed.
 pub fn parse_source(source: &str) -> Result<&str, &'static str> {
     let trimmed = source.trim();
     if trimmed.is_empty() {

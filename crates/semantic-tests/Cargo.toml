@@ -1,11 +1,16 @@
 [package]
 name = "semantic-tests"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
 
 [dependencies]
 core-tests = { path = "../core-tests" }
+tokio = { version = "1", features = ["rt", "macros", "sync"], optional = true }
 
 [features]
 default = ["semantic"]
 semantic = []
+async = ["dep:tokio"]

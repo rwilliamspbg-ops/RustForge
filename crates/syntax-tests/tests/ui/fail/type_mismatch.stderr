@@ -1,0 +1,7 @@
+error[E0308]: mismatched types
+ --> tests/ui/fail/type_mismatch.rs:2:18
+  |
+2 |     let x: u32 = "not a number";
+  |            ---   ^^^^^^^^^^^^^^ expected `u32`, found `&str`
+  |            |
+  |            expected due to this

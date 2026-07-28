@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # Main workspace (crates/*).
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      cargo-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+
+  # fuzz/ is a detached workspace (its own [workspace] table), so it needs
+  # its own Dependabot entry.
+  - package-ecosystem: "cargo"
+    directory: "/fuzz"
+    schedule:
+      interval: "weekly"
+    groups:
+      fuzz-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "fuzz"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"

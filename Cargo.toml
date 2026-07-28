@@ -16,5 +16,8 @@ rust-version = "1.75"
 license = "MIT"
 
 [workspace.metadata.rustforge]
+# These names match the real `--features <name>` flag on the corresponding
+# crate (performance-tests -> "perf", edge-cases -> "edge"), so they can be
+# used directly, e.g. `cargo test -p performance-tests --features perf`.
 default_categories = ["syntax", "semantic", "integration"]
-optional_categories = ["performance", "fuzz", "edge-cases"]
+optional_categories = ["perf", "fuzz", "edge"]
