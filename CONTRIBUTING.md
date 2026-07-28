@@ -3,6 +3,10 @@
 RustForge is a template workspace, so contributions should keep every crate
 easy to lift out and drop into an adopter's own project.
 
+- Adding a test to an existing category? See [`docs/adding-tests.md`](docs/adding-tests.md).
+- Wondering *why* something's built the way it is? See [`docs/best-practices.md`](docs/best-practices.md) and [`docs/architecture.md`](docs/architecture.md).
+- Adding a whole new category crate? See "Adding a New Test Category" below.
+
 ## Contributor Checklist
 
 Before opening a pull request:
@@ -21,10 +25,16 @@ Before opening a pull request:
       remains fast and dependency-light, and is pinned to an MSRV-compatible
       version if the latest release has moved past `rust-version` in the
       root `Cargo.toml` (see the "MSRV" section of `README.md`).
+- [ ] If you pinned a dependency for MSRV reasons, add a matching `ignore`
+      rule in `.github/dependabot.yml` — otherwise Dependabot will propose
+      bumping straight past the pin (see `docs/best-practices.md`).
 - [ ] New test categories or crates are documented in the root `README.md`
-      module table and, if relevant, `docs/adoption.md`.
+      module table and, if relevant, `docs/adoption.md`, and have their own
+      short `crates/<name>/README.md`.
 - [ ] Fixtures and helpers that other crates should reuse live in
       `crates/core-tests`, not duplicated per category.
+- [ ] `cargo deny check` passes if you changed dependencies (install with
+      `cargo install cargo-deny --locked`).
 
 ## Adding a New Test Category
 
