@@ -1,0 +1,5 @@
+# Normalize line endings to LF for everything, regardless of a
+# contributor's core.autocrlf setting. CI runs on ubuntu-latest and
+# rustfmt.toml pins newline_style = "Unix", so Windows checkouts need to
+# match or `cargo fmt --check` fails on line endings alone, not content.
+* text=auto eol=lf

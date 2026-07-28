@@ -1,8 +1,13 @@
+//! Ownership, borrowing, trait dispatch, and async semantics.
 #![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+/// Spawns `worker_count` threads that each increment a shared counter once,
+/// joins them all, and returns the final count — a smoke test that
+/// `Arc<Mutex<_>>` sharing behaves as expected under concurrent mutation.
 pub fn shared_counter_after_workers(worker_count: usize) -> usize {
     let counter = Arc::new(Mutex::new(0usize));
 
@@ -27,10 +32,13 @@ pub fn shared_counter_after_workers(worker_count: usize) -> usize {
 /// A trait exercised via both a generic bound and a trait object, to cover
 /// static and dynamic dispatch in the same semantic-tests suite.
 pub trait Greeter {
+    /// Returns a greeting string for this greeter.
     fn greet(&self) -> String;
 }
 
+/// A [`Greeter`] that greets by a fixed name.
 pub struct NamedGreeter {
+    /// The name to greet.
     pub name: String,
 }
 
@@ -40,10 +48,12 @@ impl Greeter for NamedGreeter {
     }
 }
 
+/// Calls `greeter.greet()` through a generic bound (static dispatch).
 pub fn greet_via_generic<G: Greeter>(greeter: &G) -> String {
     greeter.greet()
 }
 
+/// Calls `greeter.greet()` through a trait object (dynamic dispatch).
 pub fn greet_via_trait_object(greeter: &dyn Greeter) -> String {
     greeter.greet()
 }

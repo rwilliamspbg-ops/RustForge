@@ -1,5 +1,12 @@
+//! Boundary-value and robustness checks — the kind of off-by-one, overflow,
+//! and multi-byte-character gotchas that are easy to miss until production.
 #![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
+/// Returns `input`'s byte length, capped at `max`.
+///
+/// This is a *byte count*, not a char-safe truncation point — see
+/// [`safe_truncate`] for the gotcha that creates and how to avoid it.
 pub fn clamp_len(input: &str, max: usize) -> usize {
     input.len().min(max)
 }

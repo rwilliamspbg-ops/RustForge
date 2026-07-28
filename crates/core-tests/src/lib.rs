@@ -1,23 +1,39 @@
+//! Shared fixtures and assertion helpers reused by every other category
+//! crate in the workspace. Keep this crate dependency-light by default —
+//! anything heavier belongs behind a feature flag (see `async`/`no_std`
+//! below).
 #![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
+/// A minimal user-shaped fixture, built with the `with_*` builder methods.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UserFixture {
+    /// The fixture's username.
     pub username: String,
+    /// The fixture's password. Empty by default — see [`default_user_fixture`].
     pub password: String,
 }
 
 impl UserFixture {
+    /// Returns a copy of this fixture with a different username.
     pub fn with_username(mut self, username: impl Into<String>) -> Self {
         self.username = username.into();
         self
     }
 
+    /// Returns a copy of this fixture with a different password.
     pub fn with_password(mut self, password: impl Into<String>) -> Self {
         self.password = password.into();
         self
     }
 }
 
+/// Builds the default [`UserFixture`].
+///
+/// The password comes from the `RUSTFORGE_TEST_PASSWORD` environment
+/// variable, defaulting to empty, rather than a hardcoded literal — so
+/// fixtures never carry a real-looking secret into test output or version
+/// control.
 pub fn default_user_fixture() -> UserFixture {
     UserFixture {
         username: "alice".to_string(),
@@ -25,6 +41,7 @@ pub fn default_user_fixture() -> UserFixture {
     }
 }
 
+/// Asserts that `haystack` contains `needle`, with a message naming both.
 pub fn assert_contains(haystack: &str, needle: &str) {
     assert!(
         haystack.contains(needle),

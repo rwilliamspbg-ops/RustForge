@@ -12,6 +12,11 @@ permissions:
 
 jobs:
   test:
+    # Uses an explicit feature list rather than --all-features, deliberately
+    # excluding syntax-tests' `compile-fail` feature: it runs trybuild UI
+    # tests that assert on rustc's exact diagnostic text, which can drift
+    # between stable/beta/nightly. That feature gets its own `trybuild` job
+    # pinned to stable only, below.
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -28,9 +33,19 @@ jobs:
       - name: fmt
         run: cargo fmt --all --check
       - name: clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --features async,no_std,perf,fuzz,edge -- -D warnings
       - name: tests
-        run: cargo test --workspace --all-features
+        run: cargo test --workspace --features async,no_std,perf,fuzz,edge
+
+  trybuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: compile-fail UI tests
+        run: cargo test -p syntax-tests --features compile-fail
 
   fuzz-build:
     runs-on: ubuntu-latest
@@ -46,3 +61,37 @@ jobs:
       - name: build fuzz targets
         working-directory: fuzz
         run: cargo fuzz build
+
+  msrv:
+    # Verifies the *default*-feature build actually compiles under the
+    # workspace's declared rust-version. The perf/fuzz features intentionally
+    # pull in ecosystem tooling with a newer MSRV of their own — see the
+    # "MSRV" section in README.md. Deliberately does not use --locked: the
+    # committed Cargo.lock is in lockfile format v4 (requires Cargo >= 1.78),
+    # which an MSRV 1.75 toolchain can't read. Letting Cargo re-resolve is
+    # fine here since the default build has no external dependencies.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust 1.75
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.75"
+      - uses: Swatinem/rust-cache@v2
+      - name: check (default features)
+        run: cargo check --workspace
+      - name: test (default features)
+        run: cargo test --workspace
+
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cargo-deny (main workspace)
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: Cargo.toml
+      - name: cargo-deny (fuzz/)
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: fuzz/Cargo.toml

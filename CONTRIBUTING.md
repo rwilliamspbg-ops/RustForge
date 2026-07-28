@@ -10,9 +10,17 @@ Before opening a pull request:
 - [ ] `cargo fmt --all --check` passes.
 - [ ] `cargo clippy --workspace --all-targets --all-features -- -D warnings` passes.
 - [ ] `cargo test --workspace --all-features` passes.
-- [ ] New optional tooling (e.g. `criterion`, `proptest`, `tokio`) stays behind
-      a Cargo feature so default `cargo test --workspace` remains fast and
-      dependency-light.
+- [ ] If you touched `syntax-tests`' UI fixtures, `cargo test -p syntax-tests
+      --features compile-fail` passes on **stable**. (CI's multi-toolchain
+      `test` job deliberately excludes `compile-fail` from its
+      `--all-features`-equivalent run — see `ci/README.md` — so this needs
+      a separate local check; `scripts/check.sh` uses `--all-features` and
+      covers it too, as long as you run it on stable.)
+- [ ] New optional tooling (e.g. `criterion`, `proptest`, `tokio`, `trybuild`)
+      stays behind a Cargo feature so default `cargo test --workspace`
+      remains fast and dependency-light, and is pinned to an MSRV-compatible
+      version if the latest release has moved past `rust-version` in the
+      root `Cargo.toml` (see the "MSRV" section of `README.md`).
 - [ ] New test categories or crates are documented in the root `README.md`
       module table and, if relevant, `docs/adoption.md`.
 - [ ] Fixtures and helpers that other crates should reuse live in

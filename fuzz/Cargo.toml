@@ -3,6 +3,7 @@ name = "fuzz-tests-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2021"
+license = "MIT"
 
 # Detach from the parent workspace: cargo-fuzz targets need nightly and a
 # distinct dependency resolution, so they should never be built as part of

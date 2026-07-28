@@ -1,7 +1,16 @@
+//! Fuzz harness-friendly entry points. The functions here are exercised
+//! three ways, from cheapest to most thorough: plain unit tests below,
+//! `proptest` property tests behind the `fuzz` feature, and a real
+//! `cargo-fuzz`/libFuzzer target in the detached `fuzz/` workspace at the
+//! repo root (see `fuzz/README.md`).
 #![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
 use std::str::Utf8Error;
 
+/// Validates that `bytes` is well-formed UTF-8, returning the borrowed
+/// `&str` view on success. Never panics on any input, valid or not — that
+/// guarantee is exactly what the fuzz target in `fuzz/` checks.
 pub fn utf8_input(bytes: &[u8]) -> Result<&str, Utf8Error> {
     std::str::from_utf8(bytes)
 }

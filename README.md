@@ -63,6 +63,7 @@ Optional, dependency-pulling tooling is gated behind Cargo features so
 | `performance-tests` | `perf` | `criterion` | `cargo bench -p performance-tests --features perf` |
 | `fuzz-tests` | `fuzz` | `proptest` | property tests (`cargo test -p fuzz-tests --features fuzz`) |
 | `edge-cases` | `edge` | — | checked-arithmetic boundary helpers (`overflow_checks`) guarding `usize` under/overflow |
+| `syntax-tests` | `compile-fail` | `trybuild` | UI/compile-fail tests (`cargo test -p syntax-tests --features compile-fail`) — CI-pinned to stable only, see [`ci/README.md`](ci/README.md) |
 
 The real `cargo-fuzz` scaffold lives in [`fuzz/`](fuzz), which is a detached
 workspace (see [`fuzz/README.md`](fuzz/README.md)) since fuzzing needs
@@ -81,22 +82,27 @@ independently of this template, since those crates set their own MSRV:
 
 - `fuzz-tests`'s `fuzz` feature pins `proptest` to the `~1.8` line
   specifically to stay within 1.75 (proptest 1.9+ needs rustc 1.82+).
+- `syntax-tests`'s `compile-fail` feature pins `trybuild` to `=1.0.111`
+  for the same reason (1.0.112+ needs rustc 1.76+).
 - `performance-tests`'s `perf` feature depends on `criterion`, whose own
   dependency chain (`clap`, `regex`, `plotters`, ...) tracks current stable
   Rust and can exceed 1.75. Use a recent stable toolchain when running
   `cargo bench`.
 
-CI's `test` job runs on stable/beta/nightly with `--all-features`, so it
-will surface any future MSRV drift on those toolchains even though it
-doesn't pin to 1.75 explicitly.
+CI's `test` job runs on stable/beta/nightly with every feature except
+`compile-fail` (see [`ci/README.md`](ci/README.md) for why), so it will
+surface any future MSRV drift on those toolchains. A dedicated `msrv` job
+verifies the default build against Rust 1.75 itself, rather than just
+asserting the promise in docs.
 
 ## Tooling & Automation
 
 - Native `cargo test` is first-class.
-- CI workflow includes `fmt`, `clippy`, and workspace tests on stable/beta/nightly, plus a nightly `fuzz-build` job. See [`ci/README.md`](ci/README.md).
+- CI workflow includes `fmt`, `clippy`, and workspace tests on stable/beta/nightly, a stable-only `trybuild` job, a nightly `fuzz-build` job, an MSRV job, and a `cargo-deny` supply-chain job. See [`ci/README.md`](ci/README.md).
 - `scripts/check.sh` mirrors the CI gate locally; `scripts/coverage.sh` generates an HTML coverage report. See [`scripts/README.md`](scripts/README.md).
 - Runnable examples live under each crate's `examples/` directory, e.g. `cargo run -p core-tests --example fixture_walkthrough`. See [`examples/README.md`](examples/README.md).
-- Optional ecosystem tools are layered in incrementally behind features above (`criterion`, `proptest`, `cargo-fuzz`, `tokio`); add `cargo-nextest` or `trybuild` the same way as your suite grows.
+- Optional ecosystem tools are layered in incrementally behind the features above (`criterion`, `proptest`, `trybuild`, `cargo-fuzz`, `tokio`); add `cargo-nextest` the same way as your suite grows.
+- Dependency hygiene: [`deny.toml`](deny.toml) (licenses/advisories/bans/sources, checked in CI) and [`.github/dependabot.yml`](.github/dependabot.yml) (weekly update PRs for both the main workspace and the detached `fuzz/` workspace).
 
 ## Coverage, Reporting, and Debugging
 
