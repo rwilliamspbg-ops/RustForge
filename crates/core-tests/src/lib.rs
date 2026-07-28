@@ -21,7 +21,7 @@ impl UserFixture {
 pub fn default_user_fixture() -> UserFixture {
     UserFixture {
         username: "alice".to_string(),
-        password: "correct horse battery staple".to_string(),
+        password: std::env::var("RUSTFORGE_TEST_PASSWORD").unwrap_or_default(),
     }
 }
 

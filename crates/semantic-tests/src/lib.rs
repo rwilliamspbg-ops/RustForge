@@ -24,7 +24,6 @@ pub fn shared_counter_after_workers(worker_count: usize) -> usize {
     final_value
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::shared_counter_after_workers;
