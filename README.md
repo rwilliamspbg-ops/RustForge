@@ -1,6 +1,7 @@
 # RustForge
 
 [![CI](https://github.com/rwilliamspbg-ops/RustForge/actions/workflows/ci.yml/badge.svg)](https://github.com/rwilliamspbg-ops/RustForge/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/RustForge?include_prereleases&label=release)](https://github.com/rwilliamspbg-ops/RustForge/releases)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 [![MSRV: 1.75](https://img.shields.io/badge/MSRV-1.75-blue.svg)](#msrv)
 

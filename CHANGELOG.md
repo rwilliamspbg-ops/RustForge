@@ -6,7 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0-alpha] - 2026-07-28
+
+First tagged release. Everything below accumulated across four build-out
+passes on top of the initial scaffold (see "[0.1.0] - 2026-01-01" at the
+bottom — that entry predates any git tag; nothing was ever actually
+published before this). **Alpha**: the template's structure, feature
+flags, and CI pipeline are exercised and verified (see each phase's PR for
+what was actually run, not just written), but this is the first time
+they've all shipped together as a tagged unit — expect some rough edges
+from real-world adoption that internal verification can't fully surface.
+
 ### Added
+
+- README: `## Why RustForge?` section (pitch + "who it's for") replacing
+  the old `## Features` list, integrated from a draft after fact-checking
+  every claim against the repo and fixing an unrelated staleness the
+  review surfaced (the old section still claimed a "7-job CI pipeline";
+  it's 8 now). Cross-links to `Tooling & Automation` instead of
+  re-enumerating CI jobs, so the two can't drift apart silently again.
 
 **Phase 4 — advanced and polish:**
 
