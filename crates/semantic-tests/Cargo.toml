@@ -1,0 +1,11 @@
+[package]
+name = "semantic-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+core-tests = { path = "../core-tests" }
+
+[features]
+default = ["semantic"]
+semantic = []

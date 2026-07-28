@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/core-tests",
+  "crates/syntax-tests",
+  "crates/semantic-tests",
+  "crates/performance-tests",
+  "crates/fuzz-tests",
+  "crates/integration-tests",
+  "crates/edge-cases",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.75"
+license = "MIT"
+
+[workspace.metadata.rustforge]
+default_categories = ["syntax", "semantic", "integration"]
+optional_categories = ["performance", "fuzz", "edge-cases"]
