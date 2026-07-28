@@ -11,6 +11,19 @@ updates:
           - "*"
     labels:
       - "dependencies"
+    ignore:
+      # Pinned in crates/fuzz-tests/Cargo.toml and crates/syntax-tests/
+      # Cargo.toml specifically to keep the MSRV-sensitive `fuzz` and
+      # `compile-fail` features compiling under the workspace's declared
+      # rust-version = "1.75" (see the "MSRV" section in README.md) — newer
+      # releases require rustc 1.82+/1.76+ respectively. Bumping past these
+      # is a deliberate MSRV decision, not something to automate; update
+      # this ignore rule and the matching Cargo.toml pin together if that
+      # decision changes.
+      - dependency-name: "proptest"
+        versions: [">1.8.0"]
+      - dependency-name: "trybuild"
+        versions: [">1.0.111"]
 
   # fuzz/ is a detached workspace (its own [workspace] table), so it needs
   # its own Dependabot entry.

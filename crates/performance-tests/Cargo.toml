@@ -16,7 +16,7 @@ publish = false
 # compilation) under the workspace's MSRV toolchain. Pinning each offender
 # one at a time isn't sustainable, so the `msrv` CI job instead excludes
 # this crate from its `cargo test` step — see `.github/workflows/ci.yml`.
-criterion = "0.5"
+criterion = "0.8"
 
 [features]
 default = []

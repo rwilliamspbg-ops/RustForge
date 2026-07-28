@@ -65,6 +65,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `"performance"`/`"edge-cases"` to `"perf"`/`"edge"` to match the actual
   Cargo feature flag names on those crates.
 
+- Bumped `criterion` to `0.8` in `performance-tests` (Dependabot proposed
+  this and two other bumps in one grouped PR; see below for why only this
+  one was accepted).
+- `.github/dependabot.yml` now ignores `proptest`/`trybuild` releases past
+  the versions pinned in Cargo.toml — Dependabot doesn't know *why* those
+  are pinned (MSRV compatibility for the `fuzz`/`compile-fail` features) and
+  will otherwise keep proposing to bump straight past them.
+
 ### Fixed
 
 - Root `fuzz/README.md` no longer describes an empty placeholder directory
@@ -72,6 +80,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `deny.toml` now sets `allow-wildcard-paths` and every crate sets
   `publish = false`, fixing `cargo-deny`'s bans check flagging our own
   in-workspace path dependencies as risky "wildcard" dependencies.
+- `crates/performance-tests/benches/sum_bench.rs` now uses
+  `std::hint::black_box` instead of the now-deprecated `criterion::black_box`
+  (deprecated as of criterion 0.8, which turned into a CI failure under
+  `-D warnings` the moment Dependabot proposed the bump).
 
 ## [0.1.0] - 2026-01-01
 
