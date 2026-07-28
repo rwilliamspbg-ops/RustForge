@@ -53,14 +53,22 @@ my-test-suite/
 ## Quickstart (Plug-and-Play)
 
 1. Use this repo as a template, or copy `Cargo.toml` + `crates/` into your existing workspace.
-2. Start with core categories (`syntax`, `semantic`, `integration`).
-3. Run:
+2. **If merging into an existing workspace**, make sure its root `Cargo.toml`
+   has a `[workspace.package]` table with `edition`, `rust-version`, and
+   `license` — every crate here inherits those via `.workspace = true`, and
+   `cargo test` fails immediately (`workspace.package.edition was not
+   defined`) without it. See "Common Pitfalls" in
+   [`docs/adoption.md`](docs/adoption.md#common-pitfalls) — this is the #1
+   thing that trips up merging into an existing project, confirmed by
+   actually testing the merge flow, not just assumed.
+3. Start with core categories (`syntax`, `semantic`, `integration`).
+4. Run:
 
 ```bash
 cargo test --workspace
 ```
 
-4. Opt into advanced categories (`performance-tests`, `fuzz-tests`, `edge-cases`) and their
+5. Opt into advanced categories (`performance-tests`, `fuzz-tests`, `edge-cases`) and their
    feature flags (`perf`, `fuzz`, `edge`) as needed — see [Feature Flags](#feature-flags) below.
 
 ## Module Responsibilities
@@ -122,18 +130,40 @@ asserting the promise in docs.
 ## Tooling & Automation
 
 - Native `cargo test` is first-class.
-- CI workflow includes `fmt`, `clippy`, and workspace tests on stable/beta/nightly, a stable-only `trybuild` job, a nightly `fuzz-build` job, an MSRV job, and a `cargo-deny` supply-chain job. See [`ci/README.md`](ci/README.md).
-- `scripts/check.sh` mirrors the CI gate locally; `scripts/coverage.sh` generates an HTML coverage report. See [`scripts/README.md`](scripts/README.md).
+- CI is an 8-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
+  × ubuntu/windows/macos matrix, a stable-only `nextest` job, a stable-only
+  `trybuild` job, a nightly `fuzz-build` job (build + short smoke run per
+  target), a stable-only `coverage` job, an MSRV job, a `cargo-deny`
+  supply-chain job, and a stable-only `docs` job. See
+  [`ci/README.md`](ci/README.md) for what each one does and why it's
+  scoped the way it is.
+- [`justfile`](justfile) — `just check`, `just test-all`, `just bench`,
+  `just fuzz-run <target>`, `just coverage`, `just doc`, and more; run
+  `just --list` for the full set. `scripts/check.sh` and
+  `scripts/coverage.sh` (which the `check`/`coverage` recipes call) work
+  standalone too, no `just` required. See [`scripts/README.md`](scripts/README.md).
 - Runnable examples live under each crate's `examples/` directory, e.g. `cargo run -p core-tests --example fixture_walkthrough`. See [`examples/README.md`](examples/README.md).
-- Optional ecosystem tools are layered in incrementally behind the features above (`criterion`, `proptest`, `trybuild`, `cargo-fuzz`, `tokio`); add `cargo-nextest` the same way as your suite grows.
+- Optional ecosystem tools are layered in incrementally behind the features
+  above (`criterion`, `proptest`, `trybuild`, `cargo-fuzz`, `tokio`) or as
+  standalone dev tools (`cargo-nextest`, `cargo-llvm-cov`, `cargo-deny`,
+  `just`) — each one is opt-in and documented where it's used, not a
+  hard requirement to run `cargo test --workspace`.
 - Dependency hygiene: [`deny.toml`](deny.toml) (licenses/advisories/bans/sources, checked in CI) and [`.github/dependabot.yml`](.github/dependabot.yml) (weekly update PRs for both the main workspace and the detached `fuzz/` workspace).
 
 ## Coverage, Reporting, and Debugging
 
 Recommended defaults:
 
-- Coverage: install first with `cargo install cargo-llvm-cov`, then run `cargo llvm-cov --workspace --html`
+- Coverage: `scripts/coverage.sh` or `just coverage` (installs guidance
+  included); or manually: `rustup component add llvm-tools-preview &&
+  cargo install cargo-llvm-cov --locked`, then `cargo llvm-cov --workspace
+  --all-features --html`. Also runs in CI as a downloadable artifact — see
+  the `coverage` job.
 - Test output: `cargo test -- --nocapture`
+- Alternative runner: `cargo nextest run --workspace` (install:
+  `cargo install cargo-nextest --locked`) — faster on larger suites, one
+  process per test; doesn't run doc-tests, so it complements rather than
+  replaces `cargo test`.
 - CI artifacts: logs, reproducers, and coverage reports on failures
 
 ## Adoption Roadmap

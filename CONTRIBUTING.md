@@ -35,6 +35,13 @@ Before opening a pull request:
       `crates/core-tests`, not duplicated per category.
 - [ ] `cargo deny check` passes if you changed dependencies (install with
       `cargo install cargo-deny --locked`).
+- [ ] `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features
+      --no-deps` passes if you added or changed doc comments (catches
+      broken intra-doc links; matches CI's `docs` job).
+- [ ] If merging into an existing workspace was affected by your change,
+      the "Common Pitfalls" section of `docs/adoption.md` still reflects
+      reality — it's based on an actual reproduced test of that flow, not
+      assumptions, so keep it that way.
 
 ## Adding a New Test Category
 
@@ -49,8 +56,12 @@ Before opening a pull request:
 
 ## Local Script Shortcuts
 
-- `scripts/check.sh` mirrors the CI `fmt` + `clippy` + `test` gate.
+- `scripts/check.sh` mirrors the CI `fmt` + `clippy` + `test` + `doc` gate
+  (plus `cargo-deny`, if installed).
 - `scripts/coverage.sh` runs `cargo llvm-cov` and writes an HTML report.
+- Both are also available as [`just`](https://github.com/casey/just)
+  recipes (`just check`, `just coverage`), alongside recipes for nextest,
+  benchmarks, and fuzz targets — run `just --list` for the full set.
 
 ## Style
 

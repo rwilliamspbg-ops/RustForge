@@ -18,7 +18,7 @@ pub fn max_value(values: &[u64]) -> Option<u64> {
 
 /// Removes consecutive duplicate values, assuming `values` is already
 /// sorted (unsorted input just dedups adjacent runs, same as
-/// [`slice::dedup`]). Allocates a new `Vec`, unlike `dedup`'s in-place
+/// [`Vec::dedup`]). Allocates a new `Vec`, unlike `dedup`'s in-place
 /// truncation — useful when the benchmark should isolate allocation cost
 /// from comparison cost.
 pub fn dedup_sorted(values: &[u64]) -> Vec<u64> {
