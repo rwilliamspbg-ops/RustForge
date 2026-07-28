@@ -6,6 +6,15 @@
 #![warn(missing_docs)]
 
 /// A minimal user-shaped fixture, built with the `with_*` builder methods.
+///
+/// # Examples
+///
+/// ```
+/// use core_tests::default_user_fixture;
+///
+/// let fixture = default_user_fixture().with_username("bob");
+/// assert_eq!(fixture.username, "bob");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UserFixture {
     /// The fixture's username.
@@ -42,11 +51,112 @@ pub fn default_user_fixture() -> UserFixture {
 }
 
 /// Asserts that `haystack` contains `needle`, with a message naming both.
+///
+/// # Examples
+///
+/// ```
+/// core_tests::assert_contains("semantic::ownership", "ownership");
+/// ```
+///
+/// # Panics
+///
+/// Panics if `haystack` does not contain `needle`.
 pub fn assert_contains(haystack: &str, needle: &str) {
     assert!(
         haystack.contains(needle),
         "expected `{haystack}` to contain `{needle}`"
     );
+}
+
+/// A minimal "environment config" fixture, built with the `with_*` builder
+/// methods — the same pattern as [`UserFixture`], for tests that need
+/// config-shaped rather than user-shaped data.
+///
+/// # Examples
+///
+/// ```
+/// use core_tests::default_config_fixture;
+///
+/// let config = default_config_fixture().with_timeout_ms(500).with_retries(1);
+/// assert_eq!(config.timeout_ms, 500);
+/// assert_eq!(config.retries, 1);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConfigFixture {
+    /// The base URL a test client under test would target.
+    pub base_url: String,
+    /// Request timeout, in milliseconds.
+    pub timeout_ms: u64,
+    /// Number of retries before giving up.
+    pub retries: u32,
+}
+
+impl ConfigFixture {
+    /// Returns a copy of this fixture with a different base URL.
+    pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
+        self.base_url = base_url.into();
+        self
+    }
+
+    /// Returns a copy of this fixture with a different timeout.
+    pub fn with_timeout_ms(mut self, timeout_ms: u64) -> Self {
+        self.timeout_ms = timeout_ms;
+        self
+    }
+
+    /// Returns a copy of this fixture with a different retry count.
+    pub fn with_retries(mut self, retries: u32) -> Self {
+        self.retries = retries;
+        self
+    }
+}
+
+/// Builds the default [`ConfigFixture`]: `localhost`, a 5-second timeout,
+/// 3 retries.
+pub fn default_config_fixture() -> ConfigFixture {
+    ConfigFixture {
+        base_url: "http://localhost:8080".to_string(),
+        timeout_ms: 5_000,
+        retries: 3,
+    }
+}
+
+/// Calls `attempt` up to `max_tries` times, returning the first `Ok` or the
+/// last `Err` once every attempt has been exhausted.
+///
+/// A small, dependency-free stand-in for retrying flaky operations in
+/// tests — e.g. polling a fixture that becomes ready asynchronously,
+/// without needing an async runtime.
+///
+/// # Examples
+///
+/// ```
+/// use core_tests::retry;
+///
+/// let mut calls = 0;
+/// let result: Result<u32, &str> = retry(3, || {
+///     calls += 1;
+///     if calls < 2 { Err("not ready yet") } else { Ok(calls) }
+/// });
+///
+/// assert_eq!(result, Ok(2));
+/// ```
+///
+/// # Panics
+///
+/// Panics if `max_tries` is `0`.
+pub fn retry<T, E>(max_tries: usize, mut attempt: impl FnMut() -> Result<T, E>) -> Result<T, E> {
+    assert!(max_tries > 0, "max_tries must be at least 1");
+
+    let mut last_err = None;
+    for _ in 0..max_tries {
+        match attempt() {
+            Ok(value) => return Ok(value),
+            Err(err) => last_err = Some(err),
+        }
+    }
+
+    Err(last_err.expect("loop runs at least once since max_tries > 0"))
 }
 
 /// Async-friendly accessors for fixtures, for adopters building `tokio`-based
@@ -111,7 +221,7 @@ pub mod no_std_support {
 
 #[cfg(test)]
 mod tests {
-    use super::{assert_contains, default_user_fixture};
+    use super::{assert_contains, default_config_fixture, default_user_fixture, retry};
 
     #[test]
     fn default_fixture_can_be_customized() {
@@ -126,6 +236,66 @@ mod tests {
     #[test]
     fn assert_contains_reports_mismatch() {
         assert_contains("semantic::ownership", "ownership");
+    }
+
+    #[test]
+    fn config_fixture_can_be_customized() {
+        let config = default_config_fixture()
+            .with_base_url("https://example.test")
+            .with_timeout_ms(250)
+            .with_retries(0);
+
+        assert_eq!(config.base_url, "https://example.test");
+        assert_eq!(config.timeout_ms, 250);
+        assert_eq!(config.retries, 0);
+    }
+
+    #[test]
+    fn retry_returns_last_error_when_exhausted() {
+        let result: Result<(), &str> = retry(2, || Err("still failing"));
+        assert_eq!(result, Err("still failing"));
+    }
+
+    #[test]
+    #[should_panic(expected = "max_tries must be at least 1")]
+    fn retry_rejects_zero_max_tries() {
+        let _: Result<(), &str> = retry(0, || Ok(()));
+    }
+
+    /// Table-driven test pattern: one assertion body, many cases. Prefer
+    /// this over copy-pasted near-identical `#[test]` functions once you
+    /// have more than two or three variations of the same behavior.
+    mod retry_table_driven_examples {
+        use super::retry;
+
+        #[test]
+        fn succeeds_or_fails_depending_on_max_tries_vs_attempts_needed() {
+            let cases = [
+                // (max_tries, succeeds_on_attempt, expect_success)
+                (1, 1, true),
+                (3, 2, true),
+                (3, 3, true),
+                (2, 3, false),
+            ];
+
+            for (max_tries, succeeds_on_attempt, expect_success) in cases {
+                let mut calls = 0;
+                let result: Result<u32, &str> = retry(max_tries, || {
+                    calls += 1;
+                    if calls >= succeeds_on_attempt {
+                        Ok(calls)
+                    } else {
+                        Err("not ready yet")
+                    }
+                });
+
+                assert_eq!(
+                    result.is_ok(),
+                    expect_success,
+                    "max_tries={max_tries}, succeeds_on_attempt={succeeds_on_attempt}"
+                );
+            }
+        }
     }
 
     #[cfg(feature = "no_std")]

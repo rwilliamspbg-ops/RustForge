@@ -1,0 +1,14 @@
+error[E0382]: borrow of moved value: `s`
+ --> tests/ui/fail/use_after_move.rs:4:16
+  |
+2 |     let s = String::from("hello");
+  |         - move occurs because `s` has type `String`, which does not implement the `Copy` trait
+3 |     let t = s;
+  |             - value moved here
+4 |     println!("{s}");
+  |                ^ value borrowed here after move
+  |
+help: consider cloning the value if the performance cost is acceptable
+  |
+3 |     let t = s.clone();
+  |              ++++++++

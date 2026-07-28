@@ -217,6 +217,7 @@ name = "edge-cases"
 version = "0.1.0"
 dependencies = [
  "core-tests",
+ "proptest",
 ]
 
 [[package]]

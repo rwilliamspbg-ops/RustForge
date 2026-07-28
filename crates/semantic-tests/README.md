@@ -8,6 +8,13 @@ Ownership, borrowing, trait dispatch, and async semantics.
   mutation.
 - `Greeter` trait, `NamedGreeter` — static (`greet_via_generic`) vs.
   dynamic (`greet_via_trait_object`) dispatch, side by side.
+- `longest`, `Excerpt<'a>` — the classic multi-input lifetime example, plus
+  a struct that borrows rather than owns.
+- `assert_send::<T>()`, `assert_sync::<T>()` — compile-time `Send`/`Sync`
+  checks: instantiate with a type that isn't `Send`/`Sync` and it fails to
+  *compile*, which is the point.
+- `ConfigError`, `parse_timeout_ms` — the "implement `Error` + propagate
+  with `?`" error-handling pattern.
 - An async ownership test (behind the `async` feature) showing a value
   moved into a spawned task and handed back on completion.
 

@@ -7,6 +7,8 @@ fuzzing needs nightly and its own dependency resolution.
 
 - `fuzz_targets/utf8_input.rs` — feeds arbitrary bytes into
   `fuzz_tests::utf8_input`, asserting it never panics regardless of input.
+- `fuzz_targets/parse_u32_lenient.rs` — feeds arbitrary (valid-UTF-8) strings
+  into `fuzz_tests::parse_u32_lenient`, asserting it never panics.
 
 ## Running
 
@@ -15,10 +17,28 @@ cargo install cargo-fuzz   # once per machine
 cd fuzz
 cargo +nightly fuzz build
 cargo +nightly fuzz run utf8_input
+cargo +nightly fuzz run parse_u32_lenient
 ```
 
 Corpus and crash artifacts land in `fuzz/corpus/` and `fuzz/artifacts/`,
-both gitignored.
+both gitignored — libFuzzer grows `corpus/` unboundedly as it discovers new
+inputs, which isn't something to commit.
+
+## Seed corpus
+
+`fuzz/seed_corpus/<target>/` holds a handful of small, curated starting
+inputs per target (committed, unlike the auto-grown `corpus/`) — valid and
+invalid cases picked by hand rather than discovered by the fuzzer. Feed
+them in explicitly:
+
+```bash
+cargo +nightly fuzz run utf8_input fuzz/seed_corpus/utf8_input
+cargo +nightly fuzz run parse_u32_lenient fuzz/seed_corpus/parse_u32_lenient
+```
+
+(`cargo fuzz run <target> [extra_corpus_dirs...]` reads any positional
+directories beyond the default `corpus/<target>/` as additional seed
+input — it doesn't replace the default corpus dir.)
 
 ## Adding a target
 
