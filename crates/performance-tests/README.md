@@ -5,10 +5,12 @@ interesting part is the two ways it's exercised.
 
 ## Contents
 
-- `sum(&[u64]) -> u64` — the function under test.
-- A cheap `#[ignore]`d wall-clock regression guard (`sum_large_input_is_reasonably_fast`)
-  — no extra dependencies, opt in with `cargo test -- --ignored`.
-- `benches/sum_bench.rs` — a real Criterion benchmark, behind the `perf`
+- `sum(&[u64]) -> u64`, `max_value`, `dedup_sorted` — three functions with
+  different perf characteristics (linear scan, comparison, allocation).
+- Cheap `#[ignore]`d wall-clock regression guards — no extra dependencies,
+  opt in with `cargo test -- --ignored`.
+- `benches/sum_bench.rs`, `benches/collection_ops_bench.rs` — real
+  Criterion benchmarks (3 benchmark functions total), behind the `perf`
   feature.
 
 ## Feature flags

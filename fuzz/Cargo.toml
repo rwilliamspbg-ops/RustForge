@@ -25,3 +25,10 @@ path = "fuzz_targets/utf8_input.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "parse_u32_lenient"
+path = "fuzz_targets/parse_u32_lenient.rs"
+test = false
+doc = false
+bench = false

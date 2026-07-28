@@ -10,7 +10,9 @@ entry point and keep the pass/fail test shape.
   input containing a function declaration.
 - `tests/compile_fail.rs` + `tests/ui/{pass,fail}/` — `trybuild`
   compile-fail/UI tests, for checking that something fails to *compile*
-  rather than just returning `Err` at runtime.
+  rather than just returning `Err` at runtime. Two pass fixtures (basic,
+  generic-with-trait-bound) and two fail fixtures (type mismatch,
+  use-after-move).
 - `examples/parse_walkthrough.rs`.
 
 ## Feature flags

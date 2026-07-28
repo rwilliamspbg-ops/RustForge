@@ -8,6 +8,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+**Phase 2 — content and examples:**
+
+- `core-tests`: `ConfigFixture` (a second builder-style fixture),
+  `retry()` (a dependency-free retry helper for flaky/eventually-ready
+  operations), 4 runnable rustdoc examples (the workspace previously had
+  zero doc-tests), and a table-driven test module.
+- `semantic-tests`: `longest`/`Excerpt<'a>` (the classic multi-input
+  lifetime example), `assert_send`/`assert_sync` (compile-time `Send`/
+  `Sync` checks), and `ConfigError`/`parse_timeout_ms` (the
+  "implement `Error`, propagate with `?`" pattern).
+- `syntax-tests`: a second `trybuild` pass fixture (generic function with a
+  trait bound) and a second fail fixture (use-after-move, `E0382`).
+- `edge-cases`: `clamp_collection` (the collection counterpart to
+  `safe_truncate`, with no gotcha to fix — the boundary-value
+  counterexample), and `proptest` property tests (behind the `edge`
+  feature, now also pulling in `proptest`) for `safe_truncate`,
+  `clamp_collection`, and `checked_offset`.
+- `performance-tests`: `max_value` and `dedup_sorted`, each with a
+  Criterion benchmark in a new `benches/collection_ops_bench.rs`, unit
+  tests, and an `#[ignore]`d wall-clock regression guard.
+- `fuzz-tests`: `parse_u32_lenient`, unit tests, `proptest` property tests,
+  a second `cargo-fuzz` target (`fuzz/fuzz_targets/parse_u32_lenient.rs`),
+  and a committed `fuzz/seed_corpus/<target>/` per target (curated starting
+  inputs, distinct from the gitignored auto-grown `fuzz/corpus/`).
+- `integration-tests`: a second end-to-end test chaining all of the above
+  new functions across every category into one config-batch pipeline.
+
 - `LICENSE` (MIT), `CONTRIBUTING.md`, and this changelog.
 - `async` feature on `semantic-tests` with a Tokio-backed async ownership test.
 - `no_std` feature on `core-tests` exposing a `core`-only helper module.

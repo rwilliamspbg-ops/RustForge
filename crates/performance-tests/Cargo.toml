@@ -26,3 +26,8 @@ perf = []
 name = "sum_bench"
 harness = false
 required-features = ["perf"]
+
+[[bench]]
+name = "collection_ops_bench"
+harness = false
+required-features = ["perf"]
