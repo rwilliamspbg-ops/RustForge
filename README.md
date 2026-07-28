@@ -1,9 +1,33 @@
 # RustForge
 
 [![CI](https://github.com/rwilliamspbg-ops/RustForge/actions/workflows/ci.yml/badge.svg)](https://github.com/rwilliamspbg-ops/RustForge/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
+[![MSRV: 1.75](https://img.shields.io/badge/MSRV-1.75-blue.svg)](#msrv)
 
 RustForge is a modular, easily adoptable Rust test-suite template that scales from basic `cargo test` workflows to compiler-style coverage.
+
+## Features
+
+- **Modular by design** — seven independent category crates (`syntax`,
+  `semantic`, `performance`, `fuzz`, `integration`, `edge-cases`, plus
+  shared `core-tests`); adopt only the categories you need.
+- **Dependency-light by default** — `cargo test --workspace` pulls in zero
+  extra dependencies. Heavier tooling (Tokio, Criterion, proptest,
+  trybuild) is opt-in per feature flag; see [Feature Flags](#feature-flags).
+- **Real advanced tooling, not stubs** — a working `cargo-fuzz` target,
+  Criterion benchmarks with a regression guard, `proptest` property tests,
+  and `trybuild` compile-fail tests all actually run in CI.
+- **MSRV-aware** — a dedicated CI job verifies the default build against
+  the declared `rust-version`, not just a documentation promise.
+- **Supply-chain hygiene from day one** — `cargo-deny` (licenses,
+  advisories, banned/duplicate dependencies, untrusted sources) and
+  Dependabot are wired into CI, not bolted on later.
+- **Documented by policy** — every public item is documented, and
+  `#![warn(missing_docs)]` is enforced as a hard CI error.
+- **A real 7-job CI pipeline** — fmt, clippy, and tests across
+  stable/beta/nightly, a stable-only compile-fail job, a nightly
+  fuzz-build job, an MSRV job, and a dependency-hygiene job. See
+  [`ci/README.md`](ci/README.md).
 
 ## Workspace Layout
 
@@ -125,4 +149,12 @@ See `docs/adoption.md` for incremental rollout guidance.
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the contributor checklist and
-guidance on adding new test categories. Released under the [MIT license](LICENSE).
+guidance on adding new test categories.
+
+## License
+
+Dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at
+your option — the convention most of the Rust ecosystem uses. Unless you
+explicitly state otherwise, any contribution intentionally submitted for
+inclusion, as defined in the Apache-2.0 license, shall be dual-licensed as
+above without any additional terms or conditions.

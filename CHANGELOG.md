@@ -50,6 +50,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Doc comments on every public item across all 7 crates, plus
   `#![warn(missing_docs)]` (enforced as an error via the existing
   `-D warnings` clippy CI step) so documentation coverage doesn't regress.
+- `docs/adding-tests.md` — a practical guide to the four test shapes in
+  this template (unit, property, compile-fail, benchmark) and where a new
+  test belongs.
+- `docs/best-practices.md` — the conventions this template follows and why
+  (dependency-light defaults, MSRV pinning discipline, doc coverage,
+  narrowly-scoped CI jobs).
+- `docs/architecture.md` — workspace shape, crate dependency graph, and CI
+  pipeline, each as a Mermaid diagram.
+- A short `README.md` in every `crates/*` directory (purpose, contents,
+  feature flags, an example command).
+- `LICENSE-APACHE`, dual-licensing the project under MIT OR Apache-2.0 (the
+  Rust ecosystem convention) alongside the existing `LICENSE-MIT` (renamed
+  from `LICENSE`).
+- A "Features" highlights section, an MSRV badge, and repo description/topics.
 
 ### Changed
 
@@ -72,6 +86,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the versions pinned in Cargo.toml — Dependabot doesn't know *why* those
   are pinned (MSRV compatibility for the `fuzz`/`compile-fail` features) and
   will otherwise keep proposing to bump straight past them.
+- `license` in `[workspace.package]` (and `fuzz/Cargo.toml`) changed from
+  `"MIT"` to `"MIT OR Apache-2.0"`, matching the new dual-licensing.
 
 ### Fixed
 
