@@ -1,0 +1,10 @@
+---
+source: crates/syntax-tests/src/lib.rs
+expression: summarize_source(source)
+---
+SourceSummary {
+    trimmed: "fn main() {}",
+    byte_len: 12,
+    contains_fn: true,
+    line_count: 1,
+}

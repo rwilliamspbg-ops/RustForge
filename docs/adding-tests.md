@@ -20,7 +20,7 @@ see "Adding a New Test Category" in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 If you're not sure, default to a plain unit test in the closest-matching
 category — it's cheap to move later.
 
-## The four test shapes in this template
+## The five test shapes in this template
 
 ### 1. Plain unit test (always available, no extra deps)
 
@@ -102,7 +102,35 @@ it doesn't force every adopter to pull in Criterion by default.
 
 For a cheaper, dependency-free regression guard that runs under plain
 `cargo test`, see the `#[ignore]`d wall-clock check next to `sum_is_correct`
-in `crates/performance-tests/src/lib.rs` instead.
+in `crates/performance-tests/src/lib.rs` instead. For statistical
+regression detection (is a change actually slower, or just noise?), see
+[`docs/performance-regression-testing.md`](performance-regression-testing.md).
+
+### 5. Snapshot test (`insta`, behind `syntax-tests`' `snapshot` feature)
+
+Use when a type has enough fields that per-field assertions get unwieldy
+and start hiding the actual diff when something changes — a snapshot
+shows the whole shape at once. See `crates/syntax-tests/src/lib.rs`'s
+`snapshot_tests` module and `src/snapshots/*.snap`.
+
+```rust
+#[cfg(feature = "snapshot")]
+mod snapshot_tests {
+    #[test]
+    fn my_struct_looks_right() {
+        insta::assert_debug_snapshot!(build_my_struct());
+    }
+}
+```
+
+1. Install the review tool once: `cargo install cargo-insta --locked`.
+2. Write the assertion, then run `cargo insta test` (not plain `cargo
+   test` — it won't fail on a new/changed snapshot, it just collects a
+   `.snap.new` file for review).
+3. Run `cargo insta review` to accept or reject each `.snap.new`
+   interactively, then commit the resulting `.snap` file.
+4. Plain `cargo test` (what CI runs) *does* fail on a mismatch — `cargo
+   insta test` is a local dev convenience, not a different pass/fail rule.
 
 ## Reusing fixtures
 

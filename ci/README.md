@@ -25,9 +25,13 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   builds the targets under `fuzz/` (`cargo fuzz build`), then does a short
   (10-second) smoke run of each target seeded from the committed
   `fuzz/seed_corpus/<target>/` — enough to catch a broken harness (panics
-  immediately), not a real fuzzing campaign. `fuzz/` is a detached
-  workspace (see its own `[workspace]` table), so it's never part of the
-  main `cargo test --workspace` run.
+  immediately), not a real fuzzing campaign. On the daily `schedule`
+  trigger only (not on push/PR), it additionally runs a longer (4-minute
+  per target) campaign — see [`docs/fuzzing.md`](../docs/fuzzing.md) for
+  running an even longer one locally, plus corpus/crash-minimization and
+  coverage tooling. `fuzz/` is a detached workspace (see its own
+  `[workspace]` table), so it's never part of the main `cargo test
+  --workspace` run.
 - **`coverage` job** — runs on stable only: `cargo llvm-cov --workspace
   --all-features --html`, uploaded as a build artifact. Informational —
   doesn't gate merges on a threshold; see `scripts/coverage.sh` to run the

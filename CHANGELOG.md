@@ -8,6 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+**Phase 4 — advanced and polish:**
+
+- `syntax-tests`: `snapshot` feature (`insta`) with `SourceSummary`/
+  `summarize_source`, snapshot-tested — the pattern for when a type has
+  too many fields for per-field assertions to stay readable. No MSRV pin
+  needed (insta's own MSRV is 1.66, under the workspace's 1.75 floor).
+  `snapshot` is included in the main CI `test` job's feature list (unlike
+  `compile-fail`) since snapshot text doesn't depend on the compiler.
+- `docs/fuzzing.md`: corpus minimization (`cargo fuzz cmin`), crash-case
+  minimization (`cargo fuzz tmin`), coverage-guided sanity checks
+  (`cargo fuzz coverage`), reading ASan output, and running a real
+  (minutes, not seconds) campaign locally.
+- `docs/performance-regression-testing.md`: Criterion's built-in
+  statistical baseline comparison (`--save-baseline`/`--baseline`),
+  verified against a real deliberately-introduced regression (a
+  `thread::sleep` added to `sum` and immediately reverted) — Criterion
+  correctly flagged "Performance has regressed" with `p = 0.00`. Also
+  documents a real footgun found while verifying this: `--quick` gave a
+  **false negative** ("No change in performance detected", `p = 0.10`) on
+  that same, obvious regression — don't use `--quick` for real comparisons.
+- `fuzz-build` CI job now runs an extended (4-minute-per-target) fuzzing
+  campaign on the daily `schedule` trigger only, in addition to the
+  existing 10-second push/PR smoke-run.
+- `justfile`: `bench-baseline`/`bench-compare` recipes, pinned to
+  `--bench sum_bench --bench collection_ops_bench` rather than `--benches`
+  — Cargo's `bench` manifest field defaults to `true` for the library
+  target too, so `--benches` also invokes the crate's unit-test binary,
+  which then fails on Criterion-only flags like `--save-baseline` with
+  "Unrecognized option". Found by actually running the recipe, not assumed.
+- `*.snap.new` (insta's pending-review files) added to `.gitignore`.
+
 **Phase 2 — content and examples:**
 
 - `core-tests`: `ConfigFixture` (a second builder-style fixture),

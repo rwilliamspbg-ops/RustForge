@@ -24,6 +24,35 @@ pub fn parse_source(source: &str) -> Result<&str, &'static str> {
     Ok(trimmed)
 }
 
+/// A structural summary of already-validated source (see [`parse_source`]),
+/// meant to be snapshot-tested (behind the `snapshot` feature) rather than
+/// asserted field-by-field. Snapshot testing earns its keep once a type has
+/// enough fields that per-field assertions get unwieldy and start hiding
+/// the actual diff when something changes — the snapshot shows the whole
+/// shape at once, and `cargo insta review` turns an intentional change
+/// into a one-keystroke snapshot update instead of hand-editing assertions.
+#[derive(Debug)]
+pub struct SourceSummary<'a> {
+    /// The source text this summary describes.
+    pub trimmed: &'a str,
+    /// `trimmed`'s length in bytes.
+    pub byte_len: usize,
+    /// Whether `trimmed` contains the `fn` keyword.
+    pub contains_fn: bool,
+    /// Number of lines in `trimmed`.
+    pub line_count: usize,
+}
+
+/// Builds a [`SourceSummary`] for `source`.
+pub fn summarize_source(source: &str) -> SourceSummary<'_> {
+    SourceSummary {
+        trimmed: source,
+        byte_len: source.len(),
+        contains_fn: source.contains("fn"),
+        line_count: source.lines().count(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::parse_source;
@@ -45,5 +74,23 @@ mod tests {
             parse_source("let x = 1;"),
             Err("source must contain a function declaration")
         );
+    }
+
+    #[cfg(feature = "snapshot")]
+    mod snapshot_tests {
+        use super::super::{parse_source, summarize_source};
+
+        #[test]
+        fn summary_of_simple_function() {
+            let source = parse_source("fn main() {}").expect("valid source");
+            insta::assert_debug_snapshot!(summarize_source(source));
+        }
+
+        #[test]
+        fn summary_of_multiline_function_with_params() {
+            let source = parse_source("fn add(a: i32, b: i32) -> i32 {\n    a + b\n}")
+                .expect("valid source");
+            insta::assert_debug_snapshot!(summarize_source(source));
+        }
     }
 }

@@ -1,0 +1,10 @@
+---
+source: crates/syntax-tests/src/lib.rs
+expression: summarize_source(source)
+---
+SourceSummary {
+    trimmed: "fn add(a: i32, b: i32) -> i32 {\n    a + b\n}",
+    byte_len: 43,
+    contains_fn: true,
+    line_count: 3,
+}

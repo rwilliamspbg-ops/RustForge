@@ -48,9 +48,9 @@ jobs:
       - name: fmt
         run: cargo fmt --all --check
       - name: clippy
-        run: cargo clippy --workspace --all-targets --features async,no_std,perf,fuzz,edge -- -D warnings
+        run: cargo clippy --workspace --all-targets --features async,no_std,perf,fuzz,edge,snapshot -- -D warnings
       - name: tests
-        run: cargo test --workspace --features async,no_std,perf,fuzz,edge
+        run: cargo test --workspace --features async,no_std,perf,fuzz,edge,snapshot
 
   nextest:
     # Demonstrates cargo-nextest as an opt-in alternative test runner —
@@ -68,7 +68,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
       - name: nextest
-        run: cargo nextest run --workspace --features async,no_std,perf,fuzz,edge
+        run: cargo nextest run --workspace --features async,no_std,perf,fuzz,edge,snapshot
 
   trybuild:
     runs-on: ubuntu-latest
@@ -105,6 +105,19 @@ jobs:
       - name: smoke-run parse_u32_lenient
         working-directory: fuzz
         run: cargo fuzz run parse_u32_lenient seed_corpus/parse_u32_lenient -- -max_total_time=10
+      # Real (if still short) fuzzing campaign, only on the daily cron
+      # trigger — not on every push/PR, since a few minutes per target
+      # would slow down normal development for a check that's inherently
+      # about finding rare inputs, not about gating a specific change. See
+      # docs/fuzzing.md for running a longer campaign locally.
+      - name: extended-run utf8_input (scheduled only)
+        if: github.event_name == 'schedule'
+        working-directory: fuzz
+        run: cargo fuzz run utf8_input seed_corpus/utf8_input -- -max_total_time=240
+      - name: extended-run parse_u32_lenient (scheduled only)
+        if: github.event_name == 'schedule'
+        working-directory: fuzz
+        run: cargo fuzz run parse_u32_lenient seed_corpus/parse_u32_lenient -- -max_total_time=240
 
   coverage:
     # Informational only — reports coverage as a downloadable HTML artifact,
