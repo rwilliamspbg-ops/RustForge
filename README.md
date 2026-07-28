@@ -55,7 +55,7 @@ cargo test --workspace
 
 Recommended defaults:
 
-- Coverage: `cargo llvm-cov --workspace --html`
+- Coverage: install first with `cargo install cargo-llvm-cov`, then run `cargo llvm-cov --workspace --html`
 - Test output: `cargo test -- --nocapture`
 - CI artifacts: logs, reproducers, and coverage reports on failures
 

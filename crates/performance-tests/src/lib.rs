@@ -9,6 +9,13 @@ mod tests {
     use super::sum;
     use std::time::{Duration, Instant};
 
+    fn perf_threshold_ms() -> u64 {
+        std::env::var("RUSTFORGE_PERF_THRESHOLD_MS")
+            .ok()
+            .and_then(|value| value.parse::<u64>().ok())
+            .unwrap_or(50)
+    }
+
     #[test]
     fn sum_is_correct() {
         assert_eq!(sum(&[1, 2, 3, 4]), 10);
@@ -22,6 +29,6 @@ mod tests {
         let total = sum(&data);
 
         assert_eq!(total, 100_000);
-        assert!(start.elapsed() < Duration::from_millis(50));
+        assert!(start.elapsed() < Duration::from_millis(perf_threshold_ms()));
     }
 }
