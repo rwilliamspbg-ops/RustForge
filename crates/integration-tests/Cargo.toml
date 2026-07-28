@@ -1,0 +1,13 @@
+[package]
+name = "integration-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+core-tests = { path = "../core-tests" }
+semantic-tests = { path = "../semantic-tests" }
+syntax-tests = { path = "../syntax-tests" }
+
+[features]
+default = ["integration"]
+integration = []

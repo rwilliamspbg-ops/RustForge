@@ -1,0 +1,11 @@
+[package]
+name = "edge-cases"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+core-tests = { path = "../core-tests" }
+
+[features]
+default = []
+edge = []
