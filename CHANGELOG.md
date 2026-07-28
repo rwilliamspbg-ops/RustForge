@@ -35,6 +35,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `integration-tests`: a second end-to-end test chaining all of the above
   new functions across every category into one config-batch pipeline.
 
+**Phase 3 — automation and quality gates:**
+
+- `coverage` CI job (`cargo-llvm-cov`, uploaded as an HTML artifact,
+  informational — no enforced threshold).
+- `nextest` CI job demonstrating [cargo-nextest](https://nexte.st/) as an
+  opt-in alternative test runner (`cargo test` stays primary).
+- `docs` CI job (`RUSTDOCFLAGS=-D warnings cargo doc`), added after it
+  caught a real broken intra-doc link (`` [`slice::dedup`] `` in
+  `performance-tests`, now fixed) that nothing else in CI would have caught.
+- `fuzz-build` job now does a 10-second smoke run per target, seeded from
+  `fuzz/seed_corpus/`, after building — catches an immediately-panicking
+  harness, not just a build failure.
+- `test` job matrix now also runs stable on windows-latest and
+  macos-latest (beta/nightly stay ubuntu-only to control CI minutes).
+- `justfile` with recipes for check, fmt, clippy, test (default/all/
+  compile-fail), nextest, bench, fuzz (check/build/run), deny, coverage,
+  and doc — run `just --list`.
+- `scripts/check.sh` now also runs the `docs` check (`RUSTDOCFLAGS=-D
+  warnings cargo doc`) and, if `cargo-deny` is installed, `cargo deny
+  check` for both the main workspace and `fuzz/`.
+- "Common Pitfalls" section in `docs/adoption.md`, written from an actual
+  reproduced test of copying `crates/` into a fresh existing workspace —
+  most notably, that workspace needs its own `[workspace.package]` table
+  or every crate fails to parse (`workspace.package.edition was not
+  defined`). The Quickstart in `README.md` now calls this out as step 2.
+
 - `LICENSE` (MIT), `CONTRIBUTING.md`, and this changelog.
 - `async` feature on `semantic-tests` with a Tokio-backed async ownership test.
 - `no_std` feature on `core-tests` exposing a `core`-only helper module.
@@ -127,6 +153,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `std::hint::black_box` instead of the now-deprecated `criterion::black_box`
   (deprecated as of criterion 0.8, which turned into a CI failure under
   `-D warnings` the moment Dependabot proposed the bump).
+- Broken intra-doc link `` [`slice::dedup`] `` in `performance-tests` fixed
+  to `` [`Vec::dedup`] `` — found via the new `docs` CI job (and the
+  `just doc` recipe locally), which is why that job exists now.
+- `scripts/coverage.sh` no longer uses the deprecated `--no-run` flag; uses
+  `cargo llvm-cov report --html` instead to regenerate the HTML report
+  without re-running tests a second time.
 
 ## [0.1.0] - 2026-01-01
 
