@@ -12,8 +12,12 @@ core-tests = { path = "../core-tests" }
 # patches (112+) already require rustc 1.76+, past the workspace's MSRV, so
 # a tilde requirement would still float past it.
 trybuild = { version = "=1.0.111", optional = true }
+# No MSRV pin needed here: insta's rust-version (1.66 as of 1.48.0) is
+# already well under the workspace's 1.75 floor.
+insta = { version = "1", optional = true }
 
 [features]
 default = ["syntax"]
 syntax = []
 compile-fail = ["dep:trybuild"]
+snapshot = ["dep:insta"]

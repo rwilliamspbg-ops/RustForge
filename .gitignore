@@ -4,3 +4,7 @@
 /fuzz/target/
 /fuzz/corpus/
 /fuzz/artifacts/
+
+# insta's pending (not yet accepted) snapshots — review with `cargo insta
+# review`, then either commit the resulting .snap or discard the .snap.new
+*.snap.new

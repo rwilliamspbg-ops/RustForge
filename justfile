@@ -23,7 +23,7 @@ clippy:
 
 # Lint every feature except compile-fail (matches CI's `test` job).
 clippy-all:
-    cargo clippy --workspace --all-targets --features async,no_std,perf,fuzz,edge -- -D warnings
+    cargo clippy --workspace --all-targets --features async,no_std,perf,fuzz,edge,snapshot -- -D warnings
 
 # Run the default test suite.
 test:
@@ -31,7 +31,7 @@ test:
 
 # Run every feature except compile-fail (matches CI's `test` job).
 test-all:
-    cargo test --workspace --features async,no_std,perf,fuzz,edge
+    cargo test --workspace --features async,no_std,perf,fuzz,edge,snapshot
 
 # Run trybuild's compile-fail/UI tests. Run on stable — see ci/README.md.
 test-compile-fail:
@@ -39,11 +39,19 @@ test-compile-fail:
 
 # Run the workspace under cargo-nextest instead of `cargo test` (install: cargo install cargo-nextest --locked).
 nextest:
-    cargo nextest run --workspace --features async,no_std,perf,fuzz,edge
+    cargo nextest run --workspace --features async,no_std,perf,fuzz,edge,snapshot
 
-# Run Criterion benchmarks.
+# Run Criterion benchmarks (targets named explicitly — see bench-baseline for why).
 bench:
-    cargo bench -p performance-tests --features perf
+    cargo bench -p performance-tests --features perf --bench sum_bench --bench collection_ops_bench
+
+# Save a Criterion baseline named "main" — run this before your change.
+bench-baseline:
+    cargo bench -p performance-tests --features perf --bench sum_bench --bench collection_ops_bench -- --save-baseline main
+
+# Compare current code against the "main" baseline (see docs/performance-regression-testing.md).
+bench-compare:
+    cargo bench -p performance-tests --features perf --bench sum_bench --bench collection_ops_bench -- --baseline main
 
 # Type-check the detached fuzz/ workspace (doesn't require nightly).
 fuzz-check:

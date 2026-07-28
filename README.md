@@ -96,6 +96,7 @@ Optional, dependency-pulling tooling is gated behind Cargo features so
 | `fuzz-tests` | `fuzz` | `proptest` | property tests (`cargo test -p fuzz-tests --features fuzz`) |
 | `edge-cases` | `edge` | — | checked-arithmetic boundary helpers (`overflow_checks`) guarding `usize` under/overflow |
 | `syntax-tests` | `compile-fail` | `trybuild` | UI/compile-fail tests (`cargo test -p syntax-tests --features compile-fail`) — CI-pinned to stable only, see [`ci/README.md`](ci/README.md) |
+| `syntax-tests` | `snapshot` | `insta` | struct-shaped snapshot tests (`cargo test -p syntax-tests --features snapshot`); update with `cargo insta review` |
 
 The real `cargo-fuzz` scaffold lives in [`fuzz/`](fuzz), which is a detached
 workspace (see [`fuzz/README.md`](fuzz/README.md)) since fuzzing needs
@@ -133,8 +134,10 @@ asserting the promise in docs.
 - CI is an 8-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
   × ubuntu/windows/macos matrix, a stable-only `nextest` job, a stable-only
   `trybuild` job, a nightly `fuzz-build` job (build + short smoke run per
-  target), a stable-only `coverage` job, an MSRV job, a `cargo-deny`
-  supply-chain job, and a stable-only `docs` job. See
+  target on every push/PR, plus a longer campaign on the daily schedule —
+  see [`docs/fuzzing.md`](docs/fuzzing.md)), a stable-only `coverage` job,
+  an MSRV job, a `cargo-deny` supply-chain job, and a stable-only `docs`
+  job. See
   [`ci/README.md`](ci/README.md) for what each one does and why it's
   scoped the way it is.
 - [`justfile`](justfile) — `just check`, `just test-all`, `just bench`,
@@ -164,6 +167,13 @@ Recommended defaults:
   `cargo install cargo-nextest --locked`) — faster on larger suites, one
   process per test; doesn't run doc-tests, so it complements rather than
   replaces `cargo test`.
+- Performance regressions: `just bench-baseline` then `just bench-compare`
+  for a statistically-grounded before/after comparison — see
+  [`docs/performance-regression-testing.md`](docs/performance-regression-testing.md).
+- Snapshot testing: `cargo insta review` for `syntax-tests`' `snapshot`
+  feature — see "Snapshot test" in [`docs/adding-tests.md`](docs/adding-tests.md).
+- Fuzzing beyond the CI smoke-run: corpus/crash minimization, coverage,
+  reading ASan output — see [`docs/fuzzing.md`](docs/fuzzing.md).
 - CI artifacts: logs, reproducers, and coverage reports on failures
 
 ## Adoption Roadmap
