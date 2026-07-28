@@ -82,10 +82,19 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: remove lockfile (format v4 needs Cargo >= 1.78)
         run: rm -f Cargo.lock
-      - name: check (default features)
+      - name: check (default features, whole workspace)
         run: cargo check --workspace
-      - name: test (default features)
-        run: cargo test --workspace
+      # performance-tests' dev-dependency (criterion) can't be feature-gated
+      # (dev-deps never can be), so `cargo test` on it resolves criterion's
+      # whole transitive graph regardless of the `perf` feature. Individual
+      # pieces of that graph (clap, clap_lex, ...) have independently moved
+      # to requiring the `edition2024` Cargo feature, which breaks
+      # *resolution* itself under 1.75 — pinning each one as it comes up
+      # isn't sustainable, so this excludes performance-tests here. Its
+      # production code still compiles above; only its own dev/bench tests
+      # are skipped under this specific toolchain.
+      - name: test (default features, excluding performance-tests)
+        run: cargo test --workspace --exclude performance-tests
 
   deny:
     runs-on: ubuntu-latest
