@@ -49,19 +49,22 @@ promise. This happened once already; see the CHANGELOG.
 
 ## Forbid `unsafe` unless a category specifically needs it
 
-Every crate starts with `#![forbid(unsafe_code)]`. If you're adding a
-category that genuinely needs `unsafe` (e.g. an FFI or `no_std`-focused
-category), that's a deliberate, documented exception — don't just drop the
-attribute quietly.
+The workspace's `[lints.rust]` table in the root `Cargo.toml` sets
+`unsafe_code = "forbid"`, inherited by every crate via `[lints] workspace =
+true` — one declaration instead of a repeated `#![forbid(unsafe_code)]` per
+crate. If you're adding a category that genuinely needs `unsafe` (e.g. an
+FFI or `no_std`-focused category), override it locally with an explicit,
+documented `#![allow(unsafe_code)]` in that crate — don't change the
+workspace default for everyone else.
 
 ## Document every public item
 
-Every crate sets `#![warn(missing_docs)]`, and CI runs clippy with
-`-D warnings`, which turns that into a hard error. This is enforced, not
-aspirational — a PR that adds an undocumented `pub fn` fails CI. Doc
-comments here should explain *what a reader can't get from the signature*:
-invariants, panics, feature-flag interactions — not restate the function
-name in prose.
+The same workspace `[lints]` table sets `missing_docs = "warn"`, and CI runs
+clippy with `-D warnings`, which turns that into a hard error. This is
+enforced, not aspirational — a PR that adds an undocumented `pub fn` fails
+CI. Doc comments here should explain *what a reader can't get from the
+signature*: invariants, panics, feature-flag interactions — not restate the
+function name in prose.
 
 ## Prefer real fixtures over mocks
 
@@ -82,6 +85,31 @@ to push into the shared `core-tests` layer.
 - Testing correctness of a hot path but not its speed? A plain unit test
   is enough — save Criterion for when you actually need a regression
   guard, not by default for every function.
+
+## Mutation testing is exploratory, not a gate
+
+`just mutants` (wrapping [`cargo-mutants`](https://mutants.rs/)) runs a
+local, informational check of how much your test suite would actually
+notice if the code under test broke — the same category of signal as the
+`coverage` CI job, and deliberately kept to the same scope: nothing wires it
+into CI, and there's no required mutation-kill-rate threshold. A hard gate
+here produces tests written to kill mutants rather than to verify real
+behavior, the same failure mode a hard coverage floor produces (see "Keep CI
+jobs narrowly scoped" below and the `coverage` job's comment in
+`.github/workflows/ci.yml`). Run it periodically against a category you're
+about to refactor, not as a required check.
+
+## `cargo-semver-checks` doesn't apply here
+
+Every crate in this workspace sets `publish = false` — RustForge is meant to
+be copied or vendored into an adopter's own workspace (see
+[`docs/adoption.md`](adoption.md)), not consumed via `cargo add` against a
+version published to crates.io. `cargo-semver-checks` exists to catch
+breaking changes in a *published* crate's public API between releases; that
+contract doesn't exist here, so adding it wouldn't catch anything meaningful
+today. If this project's distribution model ever shifts toward something
+adopters pull updates from (e.g. a `cargo-generate` template with versioned
+releases) rather than a one-time copy, this is worth revisiting then.
 
 ## Keep CI jobs narrowly scoped
 

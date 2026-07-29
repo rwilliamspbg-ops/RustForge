@@ -11,6 +11,7 @@ see "Adding a New Test Category" in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 | A parser, tokenizer, or DSL front-end | `syntax-tests` | `parse_source` in `crates/syntax-tests/src/lib.rs` |
 | Something failing to *compile* (not just returning `Err`) | `syntax-tests`, `compile-fail` feature | `crates/syntax-tests/tests/ui/` |
 | Ownership, borrowing, trait dispatch, async | `semantic-tests` | `shared_counter_after_workers`, `Greeter` |
+| A data race that only shows up under specific thread interleavings | `semantic-tests`, `loom` feature | `loom_tests` module |
 | A boundary value, overflow, or off-by-one | `edge-cases` | `safe_truncate`, `overflow_checks` |
 | Throughput or latency of a hot path | `performance-tests` | `benches/sum_bench.rs` |
 | "never panics on arbitrary input" | `fuzz-tests`, `fuzz` feature (proptest) or `fuzz/` (cargo-fuzz) | `utf8_input` |
@@ -20,7 +21,44 @@ see "Adding a New Test Category" in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 If you're not sure, default to a plain unit test in the closest-matching
 category — it's cheap to move later.
 
-## The five test shapes in this template
+Same decision, as a flowchart if you'd rather branch than scan the table:
+
+```mermaid
+flowchart TD
+    start["What am I testing?"]
+    compile{"Should it fail\nto compile?"}
+    parse{"Parser, tokenizer,\nor DSL front-end?"}
+    semantic{"Ownership, borrowing,\ntrait dispatch, async?"}
+    boundary{"Boundary value,\noverflow, off-by-one?"}
+    perf{"Throughput/latency\nof a hot path?"}
+    allinputs{"Should hold for *all*\ninputs, not just a few\nhand-picked ones?"}
+    shape{"Type too complex for\nper-field assertions?"}
+    crosscat{"Multiple categories\nworking together\nend-to-end?"}
+    unit["Plain unit test in the\nclosest-matching category"]
+
+    start --> compile
+    compile -->|yes| syntaxcf["syntax-tests,\ncompile-fail feature (trybuild)"]
+    compile -->|no| parse
+    parse -->|yes| syntax["syntax-tests"]
+    parse -->|no| semantic
+    semantic -->|yes| semanticc["semantic-tests"]
+    semantic -->|no| boundary
+    boundary -->|yes| edge["edge-cases"]
+    boundary -->|no| perf
+    perf -->|yes| perfc["performance-tests,\nperf feature (criterion)"]
+    perf -->|no| allinputs
+    allinputs -->|yes| fuzzc["fuzz-tests, fuzz feature\n(proptest) or fuzz/ (cargo-fuzz)"]
+    allinputs -->|no| shape
+    shape -->|yes| snapshot["syntax-tests,\nsnapshot feature (insta)"]
+    shape -->|no| crosscat
+    crosscat -->|yes| integ["integration-tests"]
+    crosscat -->|no| unit
+
+    style start fill:#1a1a2e,stroke:#4a4a6a,color:#e0e0e0
+    style unit fill:#1a1a2e,stroke:#4a4a6a,color:#e0e0e0
+```
+
+## The six test shapes in this template
 
 ### 1. Plain unit test (always available, no extra deps)
 
@@ -131,6 +169,60 @@ mod snapshot_tests {
    interactively, then commit the resulting `.snap` file.
 4. Plain `cargo test` (what CI runs) *does* fail on a mismatch — `cargo
    insta test` is a local dev convenience, not a different pass/fail rule.
+
+### 6. Concurrency-permutation test (`loom`, behind `semantic-tests`' `loom` feature)
+
+Use when a plain-threaded test like `shared_counter_after_workers` only
+checks the interleavings your machine happened to schedule that run — loom
+instead exhaustively explores every possible thread interleaving for a
+given model, catching races that would otherwise show up as a rare,
+hard-to-reproduce CI flake. See `crates/semantic-tests/src/lib.rs`'s
+`loom_tests` module.
+
+```rust
+#[cfg(feature = "loom")]
+mod loom_tests {
+    use loom::sync::{Arc, Mutex};
+    use loom::thread;
+
+    // A small, separate copy of the pattern under test, rebuilt on loom's
+    // own `Arc`/`Mutex`/`thread` — see why below.
+    fn my_concurrent_function_loom(n: usize) -> usize {
+        /* same logic as the real function, using the loom imports above */
+        n
+    }
+
+    #[test]
+    fn my_concurrent_function_holds_under_all_interleavings() {
+        loom::model(|| {
+            assert_eq!(my_concurrent_function_loom(2), 2);
+        });
+    }
+}
+```
+
+Run with `cargo test -p semantic-tests --features loom` — it has its own
+dedicated, stable-only `loom` CI job (see [`ci/README.md`](../ci/README.md))
+rather than running in the main matrix, since exhaustive interleaving search
+is slower than a normal test run and doesn't need repeating across every
+toolchain/OS leg.
+
+Two things this pattern relies on, both visible in `semantic-tests/src/lib.rs`:
+
+- The loom test rebuilds the pattern under test as a **separate, small
+  function** using `loom::sync`/`loom::thread`, instead of making the
+  production function itself swap to loom's primitives behind the feature
+  flag. That swap looks appealing (loom would then exercise the *real*
+  function) but it's a trap: Cargo unifies features across a workspace, so
+  `cargo test --workspace --all-features` (what `scripts/check.sh` runs)
+  would enable `loom` for every crate that depends on `semantic-tests` too
+  — including `integration-tests`, which calls the real function directly,
+  outside any `loom::model`. loom's primitives panic when used outside a
+  model, so that swap breaks every other consumer of the function the
+  moment `--all-features` is in play. A small duplicated copy, scoped
+  entirely to the `loom_tests` module, avoids the leak.
+- Keep the thread/worker count small (2, not the 8 a plain-threaded test
+  might use) — loom's state space grows explosively with thread count.
 
 ## Reusing fixtures
 

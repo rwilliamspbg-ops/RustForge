@@ -1,0 +1,12 @@
+[template]
+cargo_generate_version = ">=0.18.0"
+
+# RustForge's crate names (core-tests, syntax-tests, semantic-tests, ...)
+# are meaningful and load-bearing — they're matched against real
+# `--features <name>` flags (see `[workspace.metadata.rustforge]` in the
+# root Cargo.toml) and referenced throughout docs/, not placeholder project
+# names. This is a virtual workspace with no root `[package]` to rename
+# either (see docs/architecture.md). So there's nothing here for
+# `cargo generate` to substitute: this file exists only to make
+# `cargo generate --git <repo-url>` work as a fresh-git-history alternative
+# to the manual copy flow in docs/adoption.md, not to template anything.

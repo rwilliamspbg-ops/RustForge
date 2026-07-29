@@ -1,7 +1,8 @@
 //! Boundary-value and robustness checks — the kind of off-by-one, overflow,
 //! and multi-byte-character gotchas that are easy to miss until production.
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
+//!
+//! `unsafe_code`/`missing_docs` lint policy: see the workspace `[lints]`
+//! table in the root `Cargo.toml`.
 
 /// Returns `input`'s byte length, capped at `max`.
 ///

@@ -6,6 +6,9 @@ license.workspace = true
 rust-version.workspace = true
 publish = false
 
+[lints]
+workspace = true
+
 [dependencies]
 # Pinned to the 1.8 line (rust-version 1.74) to stay within the workspace's
 # declared MSRV; proptest 1.9+ requires rustc 1.82+.

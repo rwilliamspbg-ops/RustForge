@@ -2,8 +2,9 @@
 //! crate in the workspace. Keep this crate dependency-light by default —
 //! anything heavier belongs behind a feature flag (see `async`/`no_std`
 //! below).
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
+//!
+//! `unsafe_code`/`missing_docs` lint policy: see the workspace `[lints]`
+//! table in the root `Cargo.toml`.
 
 /// A minimal user-shaped fixture, built with the `with_*` builder methods.
 ///

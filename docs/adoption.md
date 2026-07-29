@@ -1,6 +1,11 @@
 # Adoption Guide
 
-1. Copy this repository as a template or add the crates under `crates/` into your workspace.
+1. Copy this repository as a template or add the crates under `crates/` into
+   your workspace. If you have [`cargo-generate`](https://cargo-generate.github.io/cargo-generate/)
+   installed, `cargo generate --git <this-repo-url>` does the same copy with
+   a fresh git history in one command — nothing gets renamed or templated
+   (see `cargo-generate.toml`'s comment for why), it's purely a convenience
+   over manually cloning and deleting `.git`.
 2. Keep `core-tests` as the shared helper layer.
 3. Enable only the categories you need first (`syntax`, `semantic`, `integration`).
 4. Run `cargo test --workspace` and incrementally add categories (`perf`, `fuzz`, `edge`).
@@ -13,6 +18,45 @@
    (nightly-only, detached from the main workspace).
 7. Use `scripts/coverage.sh` (needs `cargo-llvm-cov`) to spot untested paths
    before adding new categories or expanding existing ones.
+
+## Migrating an existing project into RustForge's structure
+
+The steps above assume you're bringing RustForge's crates *into* your
+workspace. This section covers the other direction: you already have tests —
+probably `#[cfg(test)] mod tests { ... }` blocks scattered across your
+source files — and want to reorganize them into RustForge's category
+crates instead of writing everything from scratch.
+
+1. **Don't migrate everything at once.** Add RustForge's crates alongside
+   your existing `#[cfg(test)]` modules (see "Common Pitfalls" below for the
+   one likely snag) and leave the old tests running. `cargo test --workspace`
+   runs both; there's no conflict. Migrate incrementally, category by
+   category, as you touch each area of code.
+2. **Sort your existing tests by what they're actually checking, not where
+   they live today.** A `#[cfg(test)]` module next to a parser function and
+   one next to a business-logic function are testing fundamentally different
+   things even though they look identical structurally. Use the "Where does
+   my test go?" table (or flowchart) in
+   [`docs/adding-tests.md`](adding-tests.md) to sort each existing test
+   function into a category — most plain `#[test]` functions map to
+   `syntax-tests`, `semantic-tests`, or `edge-cases` depending on what
+   they're actually asserting, not to a single catch-all category.
+3. **Move shared setup/helper code to `core-tests` first.** If your existing
+   tests have hand-rolled fixture builders or repeated setup code, that's
+   the first thing to port — before moving the tests that use it — so the
+   categories you migrate afterward can depend on it instead of duplicating
+   it. See "Reusing fixtures" in [`docs/adding-tests.md`](adding-tests.md#reusing-fixtures).
+4. **Only add property/fuzz/snapshot/benchmark tests where they earn their
+   keep.** A plain `#[test]` that already passes doesn't need to become a
+   `proptest` property test just because `fuzz-tests` exists — those shapes
+   are for cases where a handful of hand-picked inputs genuinely aren't
+   enough (see "The five test shapes" in `docs/adding-tests.md`). Migrating
+   is about relocating and categorizing what you have, not rewriting it into
+   every available test shape.
+5. **Delete the old module once its replacement is in and passing, not
+   before.** Keep both versions running side by side for at least one CI
+   cycle so a categorization mistake shows up as a duplicate failure, not a
+   silent gap in coverage.
 
 ## Common Pitfalls
 

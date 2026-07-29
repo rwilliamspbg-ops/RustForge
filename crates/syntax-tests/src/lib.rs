@@ -4,8 +4,9 @@
 //! testing (checking that some input fails to *compile*, not just that a
 //! function returns `Err`), see the `compile-fail` feature and
 //! `tests/compile_fail.rs`.
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
+//!
+//! `unsafe_code`/`missing_docs` lint policy: see the workspace `[lints]`
+//! table in the root `Cargo.toml`.
 
 /// Validates that `source` is non-empty and contains a function declaration.
 ///

@@ -1,6 +1,7 @@
 //! Ownership, borrowing, trait dispatch, and async semantics.
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
+//!
+//! `unsafe_code`/`missing_docs` lint policy: see the workspace `[lints]`
+//! table in the root `Cargo.toml`.
 
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -227,5 +228,53 @@ mod tests {
 
         let len = handle.await.expect("task should not panic");
         assert_eq!(len, "moved into task".len());
+    }
+
+    #[cfg(feature = "loom")]
+    mod loom_tests {
+        // Mirrors `shared_counter_after_workers`'s Arc<Mutex<_>>
+        // shared-increment pattern, rebuilt on loom's own `Arc`/`Mutex`/
+        // `thread` so `loom::model` can drive it. Deliberately a separate,
+        // small copy rather than making the production function itself
+        // swap to loom's primitives behind this feature: that would leak
+        // through Cargo's workspace-wide feature unification — running
+        // `cargo test --workspace --all-features` (what `scripts/check.sh`
+        // does) enables `loom` for every crate that depends on
+        // `semantic-tests`, including `integration-tests`, which calls
+        // `shared_counter_after_workers` directly outside of any
+        // `loom::model` and would panic if that function were loom-backed.
+        use loom::sync::{Arc, Mutex};
+        use loom::thread;
+
+        fn shared_counter_after_workers_loom(worker_count: usize) -> usize {
+            let counter = Arc::new(Mutex::new(0usize));
+
+            let handles: Vec<_> = (0..worker_count)
+                .map(|_| {
+                    let counter = Arc::clone(&counter);
+                    thread::spawn(move || {
+                        *counter.lock().unwrap() += 1;
+                    })
+                })
+                .collect();
+
+            for handle in handles {
+                handle.join().unwrap();
+            }
+
+            let final_value = *counter.lock().unwrap();
+            final_value
+        }
+
+        // loom exhaustively explores thread interleavings, so its state
+        // space grows explosively with thread count — keep this at 2
+        // workers, not the 8 the plain-threaded test above uses. See
+        // "Concurrency-permutation test" in docs/adding-tests.md.
+        #[test]
+        fn shared_counter_after_workers_holds_under_all_interleavings() {
+            loom::model(|| {
+                assert_eq!(shared_counter_after_workers_loom(2), 2);
+            });
+        }
     }
 }

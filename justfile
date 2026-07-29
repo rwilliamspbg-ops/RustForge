@@ -81,3 +81,24 @@ doc:
 # Check docs for broken intra-doc links etc., matching CI's `docs` job.
 doc-check:
     RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
+
+# Chain everything CI runs (fmt, clippy, tests, nextest, doc-check, deny) into one local pre-push command.
+full-ci: fmt-check clippy-all test-all nextest doc-check
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if cargo deny --version >/dev/null 2>&1; then
+        echo "==> cargo deny check"
+        cargo deny check
+        echo "==> cargo deny check (fuzz/)"
+        (cd fuzz && cargo deny check)
+    else
+        echo "==> skipping cargo-deny check (not installed; cargo install cargo-deny --locked)"
+    fi
+
+# Release-build every optional feature as a readiness check (no publish step — every crate is `publish = false`).
+release-dry-run:
+    cargo build --workspace --release --features async,no_std,perf,fuzz,edge,snapshot
+
+# Exploratory mutation-testing pass, local-only, never wired into CI (install: cargo install cargo-mutants --locked).
+mutants:
+    cargo mutants --workspace
