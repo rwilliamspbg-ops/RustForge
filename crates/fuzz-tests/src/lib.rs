@@ -3,8 +3,9 @@
 //! `proptest` property tests behind the `fuzz` feature, and a real
 //! `cargo-fuzz`/libFuzzer target in the detached `fuzz/` workspace at the
 //! repo root (see `fuzz/README.md`).
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
+//!
+//! `unsafe_code`/`missing_docs` lint policy: see the workspace `[lints]`
+//! table in the root `Cargo.toml`.
 
 use std::str::Utf8Error;
 

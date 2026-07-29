@@ -6,6 +6,9 @@ license.workspace = true
 rust-version.workspace = true
 publish = false
 
+[lints]
+workspace = true
+
 [dev-dependencies]
 # `[dev-dependencies]` can't be optional/feature-gated (see the `perf`
 # feature below), so *any* `cargo test`/`cargo bench` invocation for this

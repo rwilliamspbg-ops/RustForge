@@ -1,3 +1,8 @@
+// Test binaries aren't a public API surface, so the workspace's
+// `missing_docs` lint (which applies package-wide, unlike the old
+// per-crate `lib.rs` attribute it replaced) doesn't apply here.
+#![allow(missing_docs)]
+
 use core_tests::{default_config_fixture, default_user_fixture, retry};
 use edge_cases::{clamp_collection, safe_truncate};
 use fuzz_tests::{parse_u32_lenient, utf8_input};

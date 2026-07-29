@@ -6,6 +6,9 @@ license.workspace = true
 rust-version.workspace = true
 publish = false
 
+[lints]
+workspace = true
+
 [dependencies]
 core-tests = { path = "../core-tests" }
 # Exact-pinned (not "~1.0.111") to 1.0.111 (rust-version 1.70): later 1.0.x

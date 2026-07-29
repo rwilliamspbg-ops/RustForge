@@ -6,11 +6,19 @@ license.workspace = true
 rust-version.workspace = true
 publish = false
 
+[lints]
+workspace = true
+
 [dependencies]
 core-tests = { path = "../core-tests" }
+# Concurrency-permutation testing for `shared_counter_after_workers` — see
+# the `loom` feature below and its dedicated CI job in
+# .github/workflows/ci.yml. Only pulled in with `--features loom`.
+loom = { version = "0.7", optional = true }
 tokio = { version = "1", features = ["rt", "macros", "sync"], optional = true }
 
 [features]
 default = ["semantic"]
 semantic = []
 async = ["dep:tokio"]
+loom = ["dep:loom"]

@@ -6,6 +6,107 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+**Phase 7 — advanced testing capabilities and CI matrix growth:**
+
+- `crates/semantic-tests`: new `loom` feature — a dedicated `loom_tests`
+  module exhaustively explores thread interleavings for the
+  `shared_counter_after_workers` pattern via
+  [loom](https://github.com/tokio-rs/loom), instead of relying on whichever
+  interleaving the OS scheduler happens to pick on a given run. Deliberately
+  a *separate*, small reimplementation using `loom::sync`/`loom::thread`
+  rather than making the production function itself swap primitives behind
+  the feature: an earlier version of this change did exactly that and broke
+  `cargo test --workspace --all-features` (what `scripts/check.sh` runs) —
+  Cargo's workspace-wide feature unification enables `loom` for every crate
+  that depends on `semantic-tests`, including `integration-tests`, which
+  calls the real function directly outside any `loom::model` and panics if
+  that function is loom-backed. Caught by actually running
+  `cargo test --workspace --all-features` before considering this done, not
+  just the isolated `--features loom` run. New dedicated stable-only `loom`
+  CI job, isolated from the main matrix (same reasoning as `trybuild`: the
+  result doesn't depend on toolchain/OS, and repeating exhaustive search 6x
+  across the matrix would add cost without adding signal). Documented as a
+  sixth test shape in `docs/adding-tests.md`.
+- `.github/workflows/ci.yml`: added `ubuntu-24.04-arm` as a stable-only
+  extra leg of the `test` job's matrix. `macos-latest` is already Apple
+  Silicon, so this closes the one concretely available remaining
+  architecture gap (GitHub-hosted Linux ARM) without building a general
+  cross-compilation matrix — no Windows-ARM or other targets added.
+- **WASM target support: deferred, not shipped.** Evaluated per the
+  original enhancement proposal and explicitly not built — there's no
+  demonstrated adopter need (only incidental transitive `wasm-bindgen`
+  dependencies exist today, pulled in by Criterion's own dependency graph,
+  not real usage), and `tokio`/`criterion`/`cargo-fuzz` don't target
+  `wasm32-unknown-unknown` anyway, so a build check would cover a narrow
+  slice of the template. Revisit if an adopter actually asks for it, rather
+  than building speculative infrastructure ahead of a real need — same
+  reasoning already applied to declining a hard coverage/mutation-testing
+  gate (see "Mutation testing is exploratory, not a gate" in
+  `docs/best-practices.md`) and to not integrating a third-party performance
+  dashboard.
+
+**Phase 6 — tooling and ecosystem integration:**
+
+- `.github/workflows/ci.yml`: new nightly-only `udeps` job (`cargo udeps
+  --workspace --all-features`), informational (`continue-on-error: true`)
+  since cargo-udeps analyzes one feature combination at a time and can
+  false-positive on feature-gated dependencies. CI is now a 9-job pipeline
+  (README/`ci/README.md` updated to match).
+- `.github/workflows/ci.yml`: the `coverage` job gained an optional,
+  off-by-default coverage-% badge step (`schneegans/dynamic-badges-action`
+  writing to a maintainer-owned Gist, read by a shields.io endpoint badge —
+  no third-party SaaS account). Skipped entirely unless
+  `vars.COVERAGE_GIST_ID`/`secrets.COVERAGE_GIST_SECRET` are configured, so
+  a fresh copy of this template has no failing CI job by default. See
+  "Coverage badge setup" in `ci/README.md` for the one-time setup steps —
+  intentionally left as a manual step since it needs a maintainer-owned
+  Gist and token this template can't create on its own.
+- `.vscode/settings.json` + `.vscode/extensions.json` (new): rust-analyzer
+  configured with `cargo.features = "all"` (matching `scripts/check.sh`'s
+  local-dev convention) and `check.command = "clippy"` so inline diagnostics
+  match what CI actually enforces; recommends the rust-analyzer and
+  even-better-toml extensions.
+- `cargo-generate.toml` (new) + a `docs/adoption.md` callout: makes
+  `cargo generate --git <repo>` work as a fresh-git-history alternative to
+  manually cloning and deleting `.git`. No templating/renaming — RustForge's
+  crate names are load-bearing (matched against real feature flags), not
+  project-specific placeholders.
+
+**Phase 5 — documentation, discoverability, and lint consolidation:**
+
+- `Cargo.toml`: `[workspace.lints.rust]` (`missing_docs = "warn"`,
+  `unsafe_code = "forbid"`), adopted by every crate via `[lints] workspace =
+  true`, replacing the previously duplicated `#![forbid(unsafe_code)]` /
+  `#![warn(missing_docs)]` attributes in each crate's `lib.rs`. One source
+  of truth for lint policy instead of seven; CI's `-D warnings` flag is
+  still what turns it into a hard failure.
+- `docs/adding-tests.md`: a mermaid decision-tree flowchart next to the
+  existing "Where does my test go?" table, for branching instead of
+  scanning when picking a test category.
+- `docs/adoption.md`: new "Migrating an existing project into RustForge's
+  structure" section covering the *reverse* direction — starting from plain
+  `cargo test`/`#[cfg(test)]` modules and sorting them into RustForge's
+  category crates. The existing pitfalls section only covered merging
+  RustForge's crates into an existing workspace.
+- `CONTRIBUTING.md`: new "Test naming and issue linking" section (naming
+  pattern, referencing issue numbers, minimal reproducers) and an updated
+  "Style" section pointing at the new workspace lints table instead of the
+  removed per-crate attributes.
+- `docs/fuzzing.md`: new "Differential fuzzing" and "Corpus sharing"
+  sections — comparing two implementations for divergent behavior, and
+  conventions for importing/promoting externally-sourced corpus inputs.
+- `justfile`: `full-ci` (chains fmt-check, clippy-all, test-all, nextest,
+  doc-check, and cargo-deny if installed — everything CI runs, in one local
+  command), `release-dry-run` (release build across every optional feature;
+  no publish step, since every crate is `publish = false`), and `mutants`
+  (wraps `cargo-mutants`, local-only and exploratory, never wired into CI).
+- `docs/best-practices.md`: updated the `unsafe`/`missing_docs` sections to
+  reference the new workspace lints table, added "Mutation testing is
+  exploratory, not a gate" (mirrors the `coverage` job's informational-only
+  reasoning), and added a "`cargo-semver-checks` doesn't apply here" section
+  explaining why it's not part of this template (every crate is `publish =
+  false`).
+
 ## [0.1.0-alpha] - 2026-07-28
 
 First tagged release. Everything below accumulated across four build-out

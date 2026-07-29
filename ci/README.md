@@ -3,7 +3,8 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
 ## Workflow: `.github/workflows/ci.yml`
 
 - **`test` job** — runs on stable/beta/nightly, all on ubuntu, plus stable
-  on windows and macos: `cargo fmt --all --check`, then clippy/tests with
+  on windows, macos, and `ubuntu-24.04-arm` (Linux ARM; macOS runners are
+  already Apple Silicon): `cargo fmt --all --check`, then clippy/tests with
   `--features async,no_std,perf,fuzz,edge` (every feature *except*
   `compile-fail`) so the Tokio-backed async test, the proptest property
   tests, and the Criterion bench code path are all checked, not just the
@@ -21,6 +22,15 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   text (`tests/ui/fail/*.stderr` in `syntax-tests`), which can drift
   between toolchain channels — pinning to stable keeps it stable to run,
   pun intended.
+- **`loom` job** — runs on stable only: `cargo test -p semantic-tests
+  --features loom`, exhaustively exploring thread interleavings for
+  `shared_counter_after_workers` via [loom](https://github.com/tokio-rs/loom)
+  instead of relying on whatever interleaving the OS scheduler happens to
+  pick. Isolated from the `test` matrix for the same reason as `trybuild`:
+  the result doesn't depend on toolchain/OS, and exhaustive search is slower
+  than a normal test run, so repeating it 6x across the matrix would add
+  cost without adding signal. See "Concurrency-permutation test" in
+  [`docs/adding-tests.md`](../docs/adding-tests.md).
 - **`fuzz-build` job** — runs on nightly only: installs `cargo-fuzz`,
   builds the targets under `fuzz/` (`cargo fuzz build`), then does a short
   (10-second) smoke run of each target seeded from the committed
@@ -35,7 +45,15 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
 - **`coverage` job** — runs on stable only: `cargo llvm-cov --workspace
   --all-features --html`, uploaded as a build artifact. Informational —
   doesn't gate merges on a threshold; see `scripts/coverage.sh` to run the
-  same thing locally.
+  same thing locally. Also has an optional, off-by-default coverage %
+  badge step — see "Coverage badge setup" below.
+- **`udeps` job** — runs on nightly only: `cargo udeps --workspace
+  --all-features`, checking for unused dependencies. Informational —
+  `continue-on-error: true` on the check step, since cargo-udeps analyzes
+  one feature combination at a time and a dependency only used behind a
+  different feature selection can look unused (a false positive, not a real
+  finding); review its output manually rather than treating a red run as a
+  failure.
 - **`msrv` job** — installs Rust 1.75 (the workspace's declared
   `rust-version`) and runs `cargo check`/`cargo test` with default features
   only, verifying the MSRV promise actually holds instead of just asserting
@@ -68,3 +86,30 @@ See the [`justfile`](../justfile) for the full set of recipes (`just
 ```bash
 scripts/coverage.sh
 ```
+
+## Coverage badge setup (optional, one-time)
+
+The `coverage` job can maintain a live coverage-% badge in `README.md`
+without a third-party SaaS account (Codecov, Coveralls) — it writes the
+percentage to a GitHub Gist via
+[`schneegans/dynamic-badges-action`](https://github.com/Schneegans/dynamic-badges-action),
+and a [shields.io](https://shields.io) endpoint badge reads that gist. The
+badge step is skipped entirely until this is configured, so a fresh copy of
+this template has no broken/red badge and no failing CI job by default. To
+enable it:
+
+1. Create a new GitHub Gist (any content — it gets overwritten) and note its
+   ID (the hex string in its URL).
+2. Create a fine-grained GitHub personal access token scoped only to that
+   gist (`gist` scope is enough).
+3. In this repo's Settings → Secrets and variables → Actions: add repo
+   **variable** `COVERAGE_GIST_ID` (the gist ID — not sensitive) and repo
+   **secret** `COVERAGE_GIST_SECRET` (the token — sensitive).
+4. Push to `main` once; the `coverage` job's badge step will populate the
+   gist.
+5. Add this to the badge row at the top of `README.md`, replacing
+   `<username>`/`<gist-id>`:
+
+   ```markdown
+   [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/<username>/<gist-id>/raw/rustforge-coverage.json)](https://github.com/rwilliamspbg-ops/RustForge/actions/workflows/ci.yml)
+   ```

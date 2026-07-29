@@ -21,7 +21,11 @@ jobs:
     # Matrix: every toolchain channel runs on ubuntu (cheap); stable
     # additionally runs on windows/macos to catch platform-specific
     # breakage (path separators, line endings, ...) without tripling the
-    # cost of the beta/nightly legs too.
+    # cost of the beta/nightly legs too. `macos-latest` is already Apple
+    # Silicon (arm64); `ubuntu-24.04-arm` adds the one other concretely
+    # available GitHub-hosted ARM runner (Linux), stable-only, same as the
+    # windows/macos legs — not a general cross-compilation matrix, just
+    # closing the one real remaining architecture gap.
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -36,6 +40,8 @@ jobs:
           - os: windows-latest
             toolchain: stable
           - os: macos-latest
+            toolchain: stable
+          - os: ubuntu-24.04-arm
             toolchain: stable
     steps:
       - uses: actions/checkout@v7
@@ -79,6 +85,21 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: compile-fail UI tests
         run: cargo test -p syntax-tests --features compile-fail
+
+  loom:
+    # Isolated from the main `test` matrix, same reasoning as `trybuild`
+    # above: exhaustive thread-interleaving search is slower than a normal
+    # test run and the result doesn't depend on toolchain channel or OS, so
+    # one stable-only run is enough — repeating it across all 5 `test`
+    # matrix legs would just multiply the cost for no extra signal.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: loom concurrency-permutation tests
+        run: cargo test -p semantic-tests --features loom
 
   fuzz-build:
     runs-on: ubuntu-latest
@@ -141,6 +162,47 @@ jobs:
         with:
           name: coverage-html
           path: target/llvm-cov/html
+      # Optional coverage % badge: only runs once a maintainer has created a
+      # gist and configured `vars.COVERAGE_GIST_ID` + `secrets.COVERAGE_GIST_SECRET`
+      # (see the "Coverage badge setup" section in ci/README.md). Skipped
+      # entirely otherwise, so this template doesn't ship a CI job that fails
+      # by default for every adopter who copies it without that setup.
+      - name: coverage summary
+        if: vars.COVERAGE_GIST_ID != ''
+        id: coverage_summary
+        run: |
+          PCT=$(cargo llvm-cov --workspace --all-features --summary-only | tail -1 | awk '{print $NF}' | tr -d '%')
+          echo "percent=$PCT" >> "$GITHUB_OUTPUT"
+      - name: update coverage badge gist
+        if: vars.COVERAGE_GIST_ID != '' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.COVERAGE_GIST_SECRET }}
+          gistID: ${{ vars.COVERAGE_GIST_ID }}
+          filename: rustforge-coverage.json
+          label: coverage
+          message: ${{ steps.coverage_summary.outputs.percent }}%
+          color: blue
+
+  udeps:
+    # Informational only, like `coverage` above — reports unused
+    # dependencies without failing the build (`continue-on-error: true` on
+    # the one step that can actually fail). Feature-gated crates routinely
+    # produce false positives here (cargo-udeps analyzes one feature
+    # combination at a time, and a dependency only used behind a
+    # not-currently-selected feature can look unused), so this is a signal
+    # to review manually, not a gate — same reasoning as the `coverage`
+    # job's "avoid busywork" scope decision.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust (nightly)
+        uses: dtolnay/rust-toolchain@nightly
+      - uses: taiki-e/install-action@cargo-udeps
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo udeps
+        run: cargo udeps --workspace --all-features
+        continue-on-error: true
 
   msrv:
     # Verifies the *default*-feature build actually compiles under the

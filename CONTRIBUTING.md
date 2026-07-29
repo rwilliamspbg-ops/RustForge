@@ -43,6 +43,23 @@ Before opening a pull request:
       reality — it's based on an actual reproduced test of that flow, not
       assumptions, so keep it that way.
 
+## Test naming and issue linking
+
+- Name test functions `<behavior>_<condition>`, e.g.
+  `sum_large_input_is_reasonably_fast`, `retry_rejects_zero_max_tries`,
+  `shared_counter_after_workers` — describe what should hold and under what
+  condition, not the function under test alone (`test_sum` says nothing a
+  reader can act on when it fails).
+- When a test exists specifically to reproduce or guard against a filed bug,
+  reference the issue number in the test's doc comment (`/// Regression test
+  for #123.`) or a `// see #123` comment near the assertion, not in the
+  function name — names should stay stable even if the issue link goes
+  stale.
+- When adding a minimal reproducer for a bug, keep it minimal: strip
+  anything not required to trigger the failure before committing it, the
+  same way you'd trim a `trybuild` UI fixture (see
+  [`docs/adding-tests.md`](docs/adding-tests.md)).
+
 ## Adding a New Test Category
 
 1. Scaffold a new crate under `crates/<name>-tests/` with its own
@@ -66,7 +83,11 @@ Before opening a pull request:
 ## Style
 
 - Keep fixtures and helpers minimal and dependency-light by default.
-- Prefer `#![forbid(unsafe_code)]` in new crates unless there's a specific,
-  documented reason a category needs `unsafe` (e.g. a future FFI category).
+- New crates get `unsafe_code = "forbid"` and `missing_docs = "warn"` for
+  free via `[lints] workspace = true` in the root `Cargo.toml` — add that to
+  a new crate's manifest rather than repeating the old per-crate
+  `#![forbid(unsafe_code)]`/`#![warn(missing_docs)]` attributes. If a
+  category has a specific, documented reason to need `unsafe` (e.g. a future
+  FFI category), override locally rather than changing the workspace default.
 - Gate anything that pulls in a non-trivial dependency (async runtimes,
   benchmarking harnesses, property-testing libraries) behind a Cargo feature.

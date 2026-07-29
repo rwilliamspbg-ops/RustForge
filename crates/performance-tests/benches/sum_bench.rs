@@ -1,3 +1,8 @@
+// Bench binaries aren't a public API surface, so the workspace's
+// `missing_docs` lint (which applies package-wide, unlike the old
+// per-crate `lib.rs` attribute it replaced) doesn't apply here.
+#![allow(missing_docs)]
+
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use performance_tests::sum;
 use std::hint::black_box;

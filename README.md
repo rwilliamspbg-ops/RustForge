@@ -156,13 +156,15 @@ asserting the promise in docs.
 ## Tooling & Automation
 
 - Native `cargo test` is first-class.
-- CI is an 8-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
-  × ubuntu/windows/macos matrix, a stable-only `nextest` job, a stable-only
-  `trybuild` job, a nightly `fuzz-build` job (build + short smoke run per
-  target on every push/PR, plus a longer campaign on the daily schedule —
-  see [`docs/fuzzing.md`](docs/fuzzing.md)), a stable-only `coverage` job,
-  an MSRV job, a `cargo-deny` supply-chain job, and a stable-only `docs`
-  job. See
+- CI is a 10-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
+  × ubuntu/windows/macos/linux-arm64 matrix, a stable-only `nextest` job, a stable-only
+  `trybuild` job, a stable-only `loom` job (concurrency-permutation testing,
+  see [`docs/adding-tests.md`](docs/adding-tests.md)), a nightly
+  `fuzz-build` job (build + short smoke run per target on every push/PR,
+  plus a longer campaign on the daily schedule — see
+  [`docs/fuzzing.md`](docs/fuzzing.md)), a stable-only `coverage` job, a
+  nightly `udeps` job (informational, unused-dependency check), an MSRV
+  job, a `cargo-deny` supply-chain job, and a stable-only `docs` job. See
   [`ci/README.md`](ci/README.md) for what each one does and why it's
   scoped the way it is.
 - [`justfile`](justfile) — `just check`, `just test-all`, `just bench`,
