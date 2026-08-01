@@ -199,26 +199,13 @@ pub mod async_support {
 /// adopter compiles this crate under `#![no_std]` (e.g. for embedded
 /// targets). The rest of `core-tests` keeps using `std` for fixture
 /// convenience; this module is where `no_std`-safe helpers should live.
+///
+/// That claim is enforced by the compiler, not just by convention: `tests/
+/// no_std_check.rs` re-includes this file's source inside a crate genuinely
+/// marked `#![no_std]`, so a future edit that sneaks in a `std` reference
+/// fails to build instead of just looking fine on review.
 #[cfg(feature = "no_std")]
-pub mod no_std_support {
-    /// Checks whether an ASCII string reads the same forwards and backwards,
-    /// without allocating.
-    pub fn is_ascii_palindrome(input: &str) -> bool {
-        let bytes = input.as_bytes();
-        let mut left = 0;
-        let mut right = bytes.len();
-
-        while left < right {
-            right -= 1;
-            if !bytes[left].eq_ignore_ascii_case(&bytes[right]) {
-                return false;
-            }
-            left += 1;
-        }
-
-        true
-    }
-}
+pub mod no_std_support;
 
 #[cfg(test)]
 mod tests {

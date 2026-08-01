@@ -16,3 +16,9 @@ tokio = { version = "1", features = ["rt", "macros"], optional = true }
 default = []
 async = ["dep:tokio"]
 no_std = []
+
+# Genuinely `#![no_std]`, gated the same as the module it re-includes — see
+# tests/no_std_check.rs.
+[[test]]
+name = "no_std_check"
+required-features = ["no_std"]

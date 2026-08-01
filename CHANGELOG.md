@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0-alpha] - 2026-08-01
+
+**Phase 8 — verification-focused CI additions:**
+
+- `.github/workflows/ci.yml`: new stable-only `hack` job (`cargo hack test
+  --workspace --feature-powerset --exclude-features compile-fail`) —
+  the `test` job's fixed feature list only ever builds one combination;
+  cargo-hack checks each crate's own feature powerset independently so a
+  broken pairing (e.g. `no_std` + `async` together) is caught and
+  attributed to the right crate. `compile-fail` excluded for the same
+  reason as in the `test` job.
+- `.github/workflows/ci.yml`: new nightly `minimal-versions` job (`cargo
+  minimal-versions test --workspace --exclude performance-tests`) —
+  re-resolves every dependency down to the lowest version each
+  `Cargo.toml` constraint allows instead of the newest resolvable one, so
+  a `Cargo.toml` requirement looser than what the code actually needs gets
+  caught here instead of by a downstream adopter with an older lockfile.
+  `performance-tests` excluded for the same reason as in the `msrv` job
+  (Criterion's transitive graph floors above what this template's version
+  claims are about). CI is now a 12-job pipeline (README/`ci/README.md`
+  updated to match).
+- `crates/core-tests`: the `no_std_support` module's "usable under
+  `#![no_std]`" claim is now enforced by the compiler, not just true by
+  convention. Moved its source to its own file
+  (`src/no_std_support.rs`) and added `tests/no_std_check.rs`, an
+  integration test genuinely marked `#![no_std]` that re-includes that
+  file via `#[path]` and calls it — gated behind `required-features =
+  ["no_std"]`, matching the existing `[[bench]] required-features =
+  ["perf"]` pattern in `performance-tests`. Since `no_std` is already in
+  the `test`/`nextest`/`coverage` jobs' feature list, no new CI job was
+  needed — those jobs now actually exercise the claim. Runs on the normal
+  host target (where `std` is always available) to check the `#![no_std]`
+  boundary itself, not cross-compilation to an embedded target — kept out
+  of scope for the same reason as the WASM-target deferral above.
+- `.github/workflows/ci.yml`: the `coverage` job now passes `--doctests`
+  to `cargo llvm-cov`, so the `///` examples throughout the workspace
+  count toward the coverage report instead of being silently excluded.
+  This requires nightly (rustdoc's doc-test coverage support is gated
+  behind the unstable `--persist-doctests` flag), so the job's toolchain
+  moved from stable to nightly. `scripts/coverage.sh` updated to match
+  (`cargo +nightly llvm-cov ... --doctests`).
+
 **Phase 7 — advanced testing capabilities and CI matrix growth:**
 
 - `crates/semantic-tests`: new `loom` feature — a dedicated `loom_tests`
