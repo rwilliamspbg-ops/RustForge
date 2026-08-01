@@ -65,6 +65,15 @@ fuzz-build:
 fuzz-run target:
     cd fuzz && cargo +nightly fuzz run {{target}} seed_corpus/{{target}}
 
+# Feature-powerset check per crate, matching CI's `hack` job (install: cargo install cargo-hack --locked).
+hack:
+    cargo hack test --workspace --feature-powerset --exclude-features compile-fail
+
+# Test against the lowest versions every Cargo.toml constraint allows, matching CI's `minimal-versions` job.
+# Needs nightly for resolution (install: cargo install cargo-hack cargo-minimal-versions --locked).
+minimal-versions:
+    cargo minimal-versions test --workspace --exclude performance-tests
+
 # Check licenses/advisories/bans/sources for both workspaces (install: cargo install cargo-deny --locked).
 deny:
     cargo deny check

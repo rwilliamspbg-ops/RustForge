@@ -9,7 +9,11 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   `compile-fail`) so the Tokio-backed async test, the proptest property
   tests, and the Criterion bench code path are all checked, not just the
   defaults. `compile-fail` is deliberately excluded here — see the
-  `trybuild` job.
+  `trybuild` job. The `no_std` feature also enables `core-tests`'
+  `tests/no_std_check.rs`, a genuinely `#![no_std]`-marked integration test
+  — so this job (and `nextest`/`coverage`, which enable the same feature)
+  actually verifies the "usable under `#![no_std]`" claim on
+  `no_std_support`, not just the code review/convention it used to rely on.
 - **`nextest` job** — runs on stable only: `cargo nextest run --workspace
   --features async,no_std,perf,fuzz,edge`. Demonstrates
   [cargo-nextest](https://nexte.st/) as an opt-in alternative runner;
@@ -42,11 +46,15 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   coverage tooling. `fuzz/` is a detached workspace (see its own
   `[workspace]` table), so it's never part of the main `cargo test
   --workspace` run.
-- **`coverage` job** — runs on stable only: `cargo llvm-cov --workspace
-  --all-features --html`, uploaded as a build artifact. Informational —
-  doesn't gate merges on a threshold; see `scripts/coverage.sh` to run the
-  same thing locally. Also has an optional, off-by-default coverage %
-  badge step — see "Coverage badge setup" below.
+- **`coverage` job** — runs on nightly (needed for `--doctests`, below):
+  `cargo llvm-cov --workspace --all-features --doctests --html`, uploaded
+  as a build artifact. `--doctests` counts the `///` examples toward
+  coverage too, not just `#[test]`s — it's implemented via rustdoc's
+  unstable `--persist-doctests`, which only the nightly compiler accepts.
+  Informational — doesn't gate merges on a threshold; see
+  `scripts/coverage.sh` to run the same thing locally. Also has an
+  optional, off-by-default coverage % badge step — see "Coverage badge
+  setup" below.
 - **`udeps` job** — runs on nightly only: `cargo udeps --workspace
   --all-features`, checking for unused dependencies. Informational —
   `continue-on-error: true` on the check step, since cargo-udeps analyzes
@@ -61,6 +69,24 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   format v4, which needs Cargo >= 1.78 to read. `performance-tests` is
   excluded from the `cargo test` step — see the comment in the workflow
   file for why.
+- **`hack` job** — runs on stable only: `cargo hack test --workspace
+  --feature-powerset --exclude-features compile-fail`. The `test` job's
+  fixed `--features async,no_std,perf,fuzz,edge,snapshot` list only ever
+  builds *one* combination; a pairing it never selects (e.g. `no_std` +
+  `async` together) can still be broken. cargo-hack checks each crate's own
+  feature powerset independently, so a failure is attributed to the crate
+  that actually has the broken combination. `compile-fail` is excluded for
+  the same reason as in the `test` job — see the `trybuild` job above.
+- **`minimal-versions` job** — runs on nightly (needed for the `-Z
+  minimal-versions` resolution step `cargo minimal-versions` performs
+  internally): `cargo minimal-versions test --workspace --exclude
+  performance-tests`. Re-resolves every dependency down to the *lowest*
+  version each `Cargo.toml` constraint allows, instead of the newest
+  semver-compatible one `cargo test` would normally pick — catches a
+  `Cargo.toml` requirement that's looser than what the code actually needs.
+  `performance-tests` is excluded for the same reason as in the `msrv` job:
+  Criterion's own transitive graph floors well above what this template's
+  version claims are about.
 - **`deny` job** — runs `cargo-deny check` (licenses, security advisories,
   banned/duplicate dependencies, untrusted sources) against both the main
   workspace and the detached `fuzz/` workspace. Config lives in

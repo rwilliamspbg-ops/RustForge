@@ -115,7 +115,7 @@ Optional, dependency-pulling tooling is gated behind Cargo features so
 | Crate | Feature | Adds | What it unlocks |
 | --- | --- | --- | --- |
 | `core-tests` | `async` | `tokio` | async fixture helpers (`async_support::default_user_fixture_async`, concurrent fixture loading) |
-| `core-tests` | `no_std` | — | `core`-only helper module (`no_std_support`) |
+| `core-tests` | `no_std` | — | `core`-only helper module (`no_std_support`), compiled under a genuinely `#![no_std]` crate in `tests/no_std_check.rs` |
 | `semantic-tests` | `async` | `tokio` | an async ownership test (`cargo test -p semantic-tests --features async`) |
 | `performance-tests` | `perf` | `criterion` | `cargo bench -p performance-tests --features perf` |
 | `fuzz-tests` | `fuzz` | `proptest` | property tests (`cargo test -p fuzz-tests --features fuzz`) |
@@ -156,15 +156,21 @@ asserting the promise in docs.
 ## Tooling & Automation
 
 - Native `cargo test` is first-class.
-- CI is a 10-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
+- CI is a 12-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
   × ubuntu/windows/macos/linux-arm64 matrix, a stable-only `nextest` job, a stable-only
   `trybuild` job, a stable-only `loom` job (concurrency-permutation testing,
   see [`docs/adding-tests.md`](docs/adding-tests.md)), a nightly
   `fuzz-build` job (build + short smoke run per target on every push/PR,
   plus a longer campaign on the daily schedule — see
-  [`docs/fuzzing.md`](docs/fuzzing.md)), a stable-only `coverage` job, a
-  nightly `udeps` job (informational, unused-dependency check), an MSRV
-  job, a `cargo-deny` supply-chain job, and a stable-only `docs` job. See
+  [`docs/fuzzing.md`](docs/fuzzing.md)), a nightly `coverage` job
+  (`--doctests` included, so `///` examples count too — needs nightly for
+  rustdoc's unstable `--persist-doctests`), a nightly `udeps` job
+  (informational, unused-dependency check), an MSRV job, a stable-only
+  `hack` job (per-crate feature-powerset testing via
+  [cargo-hack](https://github.com/taiki-e/cargo-hack)), a nightly
+  `minimal-versions` job (tests against the lowest dependency versions each
+  `Cargo.toml` constraint allows, not just the newest resolvable ones), a
+  `cargo-deny` supply-chain job, and a stable-only `docs` job. See
   [`ci/README.md`](ci/README.md) for what each one does and why it's
   scoped the way it is.
 - [`justfile`](justfile) — `just check`, `just test-all`, `just bench`,
@@ -185,10 +191,11 @@ asserting the promise in docs.
 Recommended defaults:
 
 - Coverage: `scripts/coverage.sh` or `just coverage` (installs guidance
-  included); or manually: `rustup component add llvm-tools-preview &&
-  cargo install cargo-llvm-cov --locked`, then `cargo llvm-cov --workspace
-  --all-features --html`. Also runs in CI as a downloadable artifact — see
-  the `coverage` job.
+  included); or manually: `rustup toolchain install nightly --component
+  llvm-tools-preview && cargo install cargo-llvm-cov --locked`, then `cargo
+  +nightly llvm-cov --workspace --all-features --doctests --html` (nightly
+  is needed for `--doctests`). Also runs in CI as a downloadable artifact —
+  see the `coverage` job.
 - Test output: `cargo test -- --nocapture`
 - Alternative runner: `cargo nextest run --workspace` (install:
   `cargo install cargo-nextest --locked`) — faster on larger suites, one

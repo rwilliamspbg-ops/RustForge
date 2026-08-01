@@ -146,17 +146,25 @@ jobs:
     # produce coverage-chasing busywork more than better tests; this is
     # meant to make gaps visible; instead see the "Coverage, Reporting, and
     # Debugging" section of README.md for the same thing locally.
+    #
+    # Nightly, not stable: `--doctests` (below) instruments doc-tests too —
+    # without it, every `///` example in the crates (there are several, e.g.
+    # `core-tests`'s `UserFixture`) is invisible to the coverage report, an
+    # easy-to-miss gap since nothing about a clean report tells you doctests
+    # were excluded. cargo-llvm-cov implements doc-test coverage via
+    # rustdoc's unstable `--persist-doctests`/`-Z unstable-options`, which
+    # only the nightly compiler accepts.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust (nightly)
+        uses: dtolnay/rust-toolchain@nightly
         with:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: Swatinem/rust-cache@v2
       - name: generate coverage report
-        run: cargo llvm-cov --workspace --all-features --html
+        run: cargo llvm-cov --workspace --all-features --doctests --html
       - name: upload coverage report
         uses: actions/upload-artifact@v4
         with:
@@ -171,7 +179,7 @@ jobs:
         if: vars.COVERAGE_GIST_ID != ''
         id: coverage_summary
         run: |
-          PCT=$(cargo llvm-cov --workspace --all-features --summary-only | tail -1 | awk '{print $NF}' | tr -d '%')
+          PCT=$(cargo llvm-cov --workspace --all-features --doctests --summary-only | tail -1 | awk '{print $NF}' | tr -d '%')
           echo "percent=$PCT" >> "$GITHUB_OUTPUT"
       - name: update coverage badge gist
         if: vars.COVERAGE_GIST_ID != '' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
@@ -237,6 +245,53 @@ jobs:
       # are skipped under this specific toolchain.
       - name: test (default features, excluding performance-tests)
         run: cargo test --workspace --exclude performance-tests
+
+  hack:
+    # Feature-interaction coverage the `test` job's single fixed feature
+    # list can't give you: with 6+ optional features spread across 7
+    # crates, a combination the `test` job never happens to select (e.g.
+    # `no_std` + `async` together, or `perf` alone without `fuzz`) can
+    # still be broken. cargo-hack builds every crate's own feature powerset
+    # independently rather than one workspace-wide `--all-features` blob,
+    # so a broken pairing is attributed to the crate that actually has it.
+    # `compile-fail` is excluded for the same reason it's excluded from the
+    # `test` job — trybuild's UI tests assert on rustc's exact diagnostic
+    # text, which isn't a feature-interaction concern and belongs to the
+    # dedicated stable-only `trybuild` job instead.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo hack test --feature-powerset
+        run: cargo hack test --workspace --feature-powerset --exclude-features compile-fail
+
+  minimal-versions:
+    # `cargo test --workspace` resolves every dependency to its newest
+    # semver-compatible release, which can mask a `Cargo.toml` requirement
+    # that's looser than what the code actually needs (e.g. depending on
+    # `foo = "1"` while calling an API `foo` only added in 1.4) — a
+    # downstream adopter with an older lockfile hits a compile failure this
+    # repo's own CI never sees. `cargo minimal-versions` re-resolves every
+    # dependency down to the *lowest* version each `Cargo.toml` constraint
+    # allows (needs nightly for the `-Z minimal-versions` resolution step)
+    # and tests against that. Scoped to default features and excludes
+    # `performance-tests`, matching the `msrv` job below — Criterion's own
+    # transitive graph (`clap`/`plotters`/...) floors well above what this
+    # template's MSRV-sensitive pins are about, so it would fail here for
+    # reasons unrelated to this template's own minimum-version claims.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust (nightly)
+        uses: dtolnay/rust-toolchain@nightly
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@cargo-minimal-versions
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo minimal-versions test
+        run: cargo minimal-versions test --workspace --exclude performance-tests
 
   deny:
     runs-on: ubuntu-latest
