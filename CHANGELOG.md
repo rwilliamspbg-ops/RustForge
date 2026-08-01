@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0-alpha] - 2026-08-01
+
 **Phase 8 — verification-focused CI additions:**
 
 - `.github/workflows/ci.yml`: new stable-only `hack` job (`cargo hack test
