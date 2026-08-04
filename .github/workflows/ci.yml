@@ -183,7 +183,7 @@ jobs:
           echo "percent=$PCT" >> "$GITHUB_OUTPUT"
       - name: update coverage badge gist
         if: vars.COVERAGE_GIST_ID != '' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        uses: schneegans/dynamic-badges-action@v1.7.0
+        uses: schneegans/dynamic-badges-action@v1.9.0
         with:
           auth: ${{ secrets.COVERAGE_GIST_SECRET }}
           gistID: ${{ vars.COVERAGE_GIST_ID }}
