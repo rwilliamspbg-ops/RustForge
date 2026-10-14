@@ -140,7 +140,10 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   possible suite. The job's cost is dominated by the one-time
   `cargo install cargo-generate`. `just adopt-test` runs the same two legs
   locally (the `cargo-generate` leg self-skips when the tool isn't
-  installed, like the deny step in `just full-ci`).
+  installed, like the deny step in `just full-ci`). A third step,
+  `scripts/eval-harness.sh examples/sample-candidate`, verifies the
+  evaluation harness end-to-end against the bundled sample candidate —
+  see [`docs/evaluation-harness.md`](../docs/evaluation-harness.md).
 - **`reports` job** — runs on stable only: emits the machine-readable
   reports automated consumers (CI dashboards, AI evaluators, code
   scanning) need — clippy diagnostics as JSON (`clippy-json` artifact)

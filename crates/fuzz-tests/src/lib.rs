@@ -9,6 +9,12 @@
 
 use std::str::Utf8Error;
 
+/// Property-based differential testing — two implementations that must
+/// agree, checked over `proptest`-generated inputs. The fixed-inputs
+/// variant lives in `core_tests::differential::assert_impls_agree`.
+#[cfg(feature = "fuzz")]
+pub mod differential;
+
 /// Validates that `bytes` is well-formed UTF-8, returning the borrowed
 /// `&str` view on success. Never panics on any input, valid or not — that
 /// guarantee is exactly what the fuzz target in `fuzz/` checks.

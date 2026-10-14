@@ -1,0 +1,12 @@
+error[E0599]: no method named `parse_u32_lenient` found for struct `Wrong` in the current scope
+  --> tests/ui/fail/candidate_not_implemented.rs:10:19
+   |
+ 7 | struct Wrong;
+   | ------------ method `parse_u32_lenient` not found for this struct
+...
+10 |     let _ = Wrong.parse_u32_lenient("1");
+   |                   ^^^^^^^^^^^^^^^^^ method not found in `Wrong`
+   |
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `parse_u32_lenient`, perhaps you need to implement it:
+           candidate #1: `Candidate`

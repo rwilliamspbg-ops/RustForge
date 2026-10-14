@@ -97,11 +97,11 @@ cargo test --workspace
 
 ## Module Responsibilities
 
-- `core-tests`: shared fixtures/helpers for reusable assertions and builders.
+- `core-tests`: shared fixtures/helpers for reusable assertions, builders, and differential testing (`assert_impls_agree`).
 - `syntax-tests`: parser/syntax-facing tests — compile-fail/pass (`trybuild`) and snapshot (`insta`) tests included.
 - `semantic-tests`: ownership, borrowing, traits, and async semantics.
 - `performance-tests`: benchmark/perf guard entry points.
-- `fuzz-tests`: fuzz harness-friendly entry points.
+- `fuzz-tests`: fuzz harness-friendly entry points, plus property-based differential testing (`fuzz` feature).
 - `integration-tests`: end-to-end behavior tests across categories.
 - `edge-cases`: boundary-value and robustness checks.
 
@@ -185,9 +185,14 @@ asserting the promise in docs.
   and why it's scoped the way it is.
 - [`justfile`](justfile) — `just check`, `just test-all`, `just bench`,
   `just fuzz-run <target>`, `just coverage`, `just doc`, `just miri`,
-  `just adopt-test`, the machine-readable report recipes
+  `just adopt-test`, `just eval <path>` (evaluate an external
+  implementation against the fixed harness — see
+  [`docs/evaluation-harness.md`](docs/evaluation-harness.md)), the
+  machine-readable report recipes
   (`just test-json`, `just coverage-lcov`, `just clippy-json`,
-  `just deny-json`, `just mutants-list-json` / `just mutants-json`), and
+  `just deny-json`, `just mutants-list-json` / `just mutants-json`), the
+  scoped mutation recipes (`just mutants-crate`, `mutants-file`,
+  `mutants-diff`), and
   more; run `just --list` for
   the full set. `scripts/check.sh` and
   `scripts/coverage.sh` (which the `check`/`coverage` recipes call) work

@@ -20,3 +20,18 @@ cargo run -p syntax-tests --example parse_walkthrough
 
 When adding a new example, prefer `crates/<name>-tests/examples/*.rs` over
 this directory unless you've added a root package to the workspace.
+
+## Standalone example workspaces
+
+Two directories under `examples/` are *self-contained crates* rather than
+per-package example binaries — each carries an empty `[workspace]` table
+that makes it its own workspace root, the same detachment pattern `fuzz/`
+uses. They are deliberately not members of the RustForge workspace: they
+add nothing to the default `cargo test --workspace` or its dependency
+graph, and copy out wholesale for reuse.
+
+- `examples/eval-harness/` + `examples/sample-candidate/` — the
+  code-under-test evaluation harness: a fixed contract (`Candidate`) plus
+  golden/property/compile-fail tests, evaluated against any candidate via
+  `just eval <path>`. See
+  [`docs/evaluation-harness.md`](../docs/evaluation-harness.md).

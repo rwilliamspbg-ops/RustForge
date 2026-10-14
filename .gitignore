@@ -5,6 +5,19 @@
 /fuzz/corpus/
 /fuzz/artifacts/
 
+# Standalone example workspaces under examples/ (the eval harness and
+# sample candidate) each build their own target/ if run in place.
+/examples/*/target/
+
 # insta's pending (not yet accepted) snapshots — review with `cargo insta
 # review`, then either commit the resulting .snap or discard the .snap.new
 *.snap.new
+
+# Machine-readable report outputs from the justfile recipes
+# (docs/machine-readable-outputs.md) — generated locally, never committed.
+/nextest.json
+/lcov.info
+/clippy.json
+/deny.json
+/mutants.json
+/mutants.out/

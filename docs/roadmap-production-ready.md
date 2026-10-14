@@ -32,9 +32,9 @@ testing available locally via `just mutants`.
 | Miri (UB detection) — absent entirely | Phase 1 (✅ 1.2) |
 | Machine-readable outputs (JSON/SARIF) | Phase 1 (✅ 1.3) |
 | Release hygiene (version, changelog, doc sync) | Phase 1 (✅ 1.4) |
-| Code-under-test evaluation harness | Phase 2 (2.1) |
-| Differential-testing helpers as code | Phase 2 (2.2) |
-| Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (2.3) |
+| Code-under-test evaluation harness | Phase 2 (✅ 2.1) |
+| Differential-testing helpers as code | Phase 2 (✅ 2.2) |
+| Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (✅ 2.3) |
 | const/macro test examples | Phase 3 |
 | Domain starter examples (async service, parser, CLI) | Phase 3 |
 | Quality signals (cargo-bloat, binary size, compile times) | Phase 3 |
@@ -118,35 +118,47 @@ complete CHANGELOG. — **All met** (CI runs on the PR).
 
 ## Phase 2 — P1: Evaluation / AI-readiness
 
-### 2.1 Code-under-test evaluation harness ⬜
+### 2.1 Code-under-test evaluation harness ✅
 
 New **non-member** example crate `examples/eval-harness/` (kept out of
-workspace `members` to preserve default `cargo test --workspace` speed):
+workspace `members` — an empty `[workspace]` table detaches it, the
+`fuzz/` pattern — preserving default `cargo test --workspace` speed):
 
+- **Shipped** in this changeset, alongside `examples/sample-candidate/`:
 - Fixed trait interface (`Candidate`) + golden tests + property tests + a
   trybuild negative case, all written against the trait only.
-- Adapter pattern: the implementor wraps their type in a thin `Adapter`.
-- `just eval <path-to-candidate>`: generates a throwaway workspace, wires the
-  candidate in via path dependency, runs the full suite (or a `--features`
-  subset).
+- Adapter pattern: `FnCandidate` wraps a plain `fn(&str) -> Option<u32>`
+  as a `Candidate` — the thin adapter layer for candidates whose real API
+  doesn't match the trait shape, with no changes to the code under test.
+- `just eval <path-to-candidate>`: generates a throwaway workspace, wires
+  the candidate in via path dependency, runs the full suite (or a
+  `--features` subset).
 - **Impact:** zero default-path deps; opt-in by copying the example;
   modularity preserved by non-membership.
 
-### 2.2 Differential-testing helpers (code, not just docs) ⬜
+### 2.2 Differential-testing helpers (code, not just docs) ✅
+
+**Shipped** in this changeset:
 
 - `core-tests` module `differential`:
   - `assert_impls_agree(a, b, inputs)` — two callables, same inputs, equal
     outputs/errors.
   - Property-based variant reusing `fuzz-tests`' existing `proptest` feature
     (don't duplicate the dependency).
-- Worked examples: parser (reference vs. optimized) and numeric
-  (naive vs. fast) comparisons.
+- Worked examples ship as real tests, not just docs: numeric
+  (closed-form sum vs loop) and primality (naive trial division vs
+  sqrt-bounded optimization) — plus the same two pairs over generated
+  inputs in the `fuzz` feature.
 - **Impact:** one small module; proptest variant stays feature-gated.
 
-### 2.3 Mutation-testing polish (stays exploratory — hard rule) ⬜
+### 2.3 Mutation-testing polish (stays exploratory — hard rule) ✅
 
-- `just mutants-crate <crate>` / `just mutants-file <path>` via cargo-mutants'
-  path/package filters; `--json` output (ties into 1.3).
+**Shipped** in this changeset:
+
+- `just mutants-crate <crate>` / `just mutants-file <glob>` /
+  `just mutants-diff <diff>` via cargo-mutants' package/file/diff
+  filters; each takes extra cargo-mutants arguments, composing with the
+  `--json`/`-o` output (ties into 1.3).
 - Docs: a documented *soft* reporting pattern (informational workflow comment
   with kill rate, `continue-on-error`) — **never a merge gate**.
 - **Impact:** local tooling; one informational CI job at most.
