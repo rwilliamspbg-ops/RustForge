@@ -1,0 +1,23 @@
+[package]
+name = "cli-starter"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# Standalone workspace of its own (empty `[workspace]` table — the fuzz/
+# detachment pattern), deliberately NOT a member of the RustForge
+# workspace: it adds nothing to the template's default
+# `cargo test --workspace` or its dependency graph. See
+# docs/domain-starters.md.
+[workspace]
+
+# No dependencies — hand-rolled arg parsing and std-only I/O keep the
+# example copyable and MSRV-clean.
+
+# The binary name is what `env!("CARGO_BIN_EXE_tally")` in the
+# integration tests refers to.
+[[bin]]
+name = "tally"
+path = "src/main.rs"

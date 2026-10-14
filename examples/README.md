@@ -40,3 +40,7 @@ graph, and copy out wholesale for reuse.
   golden/property/compile-fail tests, evaluated against any candidate via
   `just eval <path>`. See
   [`docs/evaluation-harness.md`](../docs/evaluation-harness.md).
+- `examples/parser-starter/`, `examples/async-service-starter/`,
+  `examples/cli-starter/` — domain starters (parser, async service,
+  CLI) showing the template's test shapes in real domains. See
+  [`docs/domain-starters.md`](../docs/domain-starters.md).

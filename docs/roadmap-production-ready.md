@@ -36,7 +36,7 @@ testing available locally via `just mutants`.
 | Differential-testing helpers as code | Phase 2 (✅ 2.2) |
 | Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (✅ 2.3) |
 | const/macro test examples | Phase 3 (✅ 3a) |
-| Domain starter examples (async service, parser, CLI) | Phase 3 |
+| Domain starter examples (async service, parser, CLI) | Phase 3 (✅ 3b) |
 | Quality signals (cargo-bloat, binary size, compile times) | Phase 3 |
 | AI test-generation aids doc | Phase 3 |
 | Minimal-adoption and test-promotion guidance | Phase 3 |
@@ -178,9 +178,11 @@ via helper; mutants scoping is scriptable.
   trybuild fixture (expected diagnostic is our own text, stable across
   rustc). Documented under "Compile-time and macro-powered checks" in
   `docs/adding-tests.md`.
-- ⬜ **Domain starter examples** (async service, parser, small CLI) as
+- ✅ **Domain starter examples** (async service, parser, small CLI) as
   non-member example directories with standalone-workspace instructions —
-  same containment strategy as the eval harness.
+  same containment strategy as the eval harness. **Shipped** in this
+  changeset: `examples/parser-starter/`, `examples/async-service-starter/`,
+  `examples/cli-starter/`, documented in `docs/domain-starters.md`.
 - ⬜ **Quality signals (opt-in):** `just bloat` (cargo-bloat), binary-size
   tracking, `cargo build --timings` artifacts — docs/local recipes only, no
   CI gates.

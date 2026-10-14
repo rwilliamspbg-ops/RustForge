@@ -62,6 +62,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   unlike the rendered rustc errors the existing fixtures assert on.
   `docs/adding-tests.md` gains "Compile-time and macro-powered checks";
   no new CI job (the `compile-fail` job's glob picks the fixture up).
+- **Domain starter examples** (Phase 3): three standalone example
+  workspaces under `examples/`, each detached with an empty `[workspace]`
+  table (the `fuzz/` pattern) so the default `cargo test --workspace`
+  stays untouched: `parser-starter` (arithmetic evaluator — unit tests
+  per construct, proptest panic-freedom/round-trips, total error enum),
+  `async-service-starter` (tokio key-value store — paused-time expiry
+  tests, concurrent inserts, background sweeper with graceful
+  shutdown), and `cli-starter` (`wc`-style CLI — pure logic in the lib,
+  thin `main`, integration tests spawning the real binary, `--json`
+  output). New doc `docs/domain-starters.md` documents the containment
+  pattern and how to copy a starter out.
 
 ## [1.0.0] - 2026-10-14
 
