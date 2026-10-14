@@ -3,6 +3,9 @@
 A practical guide to the common case: adding a test to an *existing*
 category crate. For the rarer case of adding a whole new category crate,
 see "Adding a New Test Category" in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+Generating tests with an LLM? Start from
+[`ai-test-generation.md`](ai-test-generation.md) — the checklist and
+fill-in templates that make generated tests fit these conventions.
 
 ## Where does my test go?
 
@@ -287,6 +290,34 @@ its `=>` value fails with that message instead of the classic
 trybuild fixture (`ui/fail/macro_case_missing_arrow.rs`, behind the
 `compile-fail` feature) whose expected diagnostic is *our* text, stable
 across compiler versions.
+
+## When to promote a template test into the real library's tests
+
+The category crates test the *template's* fixtures, not your code. As a
+project grows on top of RustForge, the natural end state is that the
+valuable tests live in your library's own crates, with the template's
+categories thinning out. Promote a test when:
+
+- **It tests your domain, not the template's.** The template's
+  `parse_source`/fixture tests demonstrate shapes; once your own code
+  has real tests covering the same behavior in your crates, the
+  template copies are redundant examples. Keep them only as
+  documentation of the pattern (they're small).
+- **A category crate has become your project's test suite.** If
+  `semantic-tests` now holds half your tests for real code, that crate
+  has effectively become part of your project — rename it, or move its
+  contents into your workspace's own crates, and keep the shape
+  conventions (feature gating, categories) that made it useful.
+- **The fixture no longer stands in for anything.** `core-tests`'
+  fixtures exist to be shared; if your crates now have their own
+  fixture layer, migrate the helpers there and drop the dependency.
+
+Promote by moving, not copying: move the test, delete the template
+copy, and keep CI's feature flags honest — a promoted `proptest` test
+still belongs behind a feature flag in your workspace, for the same
+reason it was gated here. The migration section of
+[`docs/adoption.md`](adoption.md) covers the same "incremental, both
+running side by side" discipline from the adopting side.
 
 ## Reusing fixtures
 

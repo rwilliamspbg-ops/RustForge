@@ -80,6 +80,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   built-in compile-time report). README's "Coverage, Reporting, and
   Debugging" section documents them; the template itself is lib-only,
   so the recipes target the example binary and document adopter usage.
+- **AI test-generation aids doc (Phase 3):** `docs/ai-test-generation.md`
+  (new) — the checklist every generated test must satisfy (category,
+  shape, feature gating, MSRV, docs, determinism), plus fill-in
+  templates: signature→property derivation (totality, round-trip,
+  invariance, boundary), trybuild compile-fail, snapshot, golden-case
+  table, and category/fixture placement recipes. Points at the
+  evaluation harness for reviewing generated *implementations*.
+  `docs/adoption.md` gains a "Minimal adoption" section (the smallest
+  useful signal: `core-tests` + `syntax-tests`, default features, zero
+  heavy deps), and `docs/adding-tests.md` gains "When to promote a
+  template test into the real library's tests" (promote by moving, keep
+  feature flags honest).
 
 ## [1.0.0] - 2026-10-14
 

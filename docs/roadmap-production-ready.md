@@ -38,8 +38,8 @@ testing available locally via `just mutants`.
 | const/macro test examples | Phase 3 (✅ 3a) |
 | Domain starter examples (async service, parser, CLI) | Phase 3 (✅ 3b) |
 | Quality signals (cargo-bloat, binary size, compile times) | Phase 3 (✅ 3c) |
-| AI test-generation aids doc | Phase 3 |
-| Minimal-adoption and test-promotion guidance | Phase 3 |
+| AI test-generation aids doc | Phase 3 (✅ 3d) |
+| Minimal-adoption and test-promotion guidance | Phase 3 (✅ 3d) |
 
 ## Phase 1 — P0: Release blockers (target: 1.0.0)
 
@@ -187,15 +187,17 @@ via helper; mutants scoping is scriptable.
   tracking, `cargo build --timings` artifacts — docs/local recipes only, no
   CI gates. **Shipped** in this changeset: `just bloat` / `bloat-json` /
   `size` / `timings` recipes, README documentation.
-- ⬜ **Docs:** "minimal adoption" path (syntax + semantic + a few properties =
+- ✅ **Docs:** "minimal adoption" path (syntax + semantic + a few properties =
   smallest useful signal) and "promoting template tests into the real
   library's own tests" guidance in `docs/adding-tests.md`.
-- ⬜ **AI test-generation aids doc:** signature→property recipes, fill-in
+  **Shipped** in this changeset (with the AI aids doc below).
+- ✅ **AI test-generation aids doc:** signature→property recipes, fill-in
   snapshot/trybuild templates, category/fixture recipes for LLM-assisted use.
+  **Shipped** in this changeset: `docs/ai-test-generation.md`.
 
 **Phase 3 exit criteria:** every nice-to-have from the external review is
 either implemented behind opt-in flags or documented as a deliberate
-non-goal.
+non-goal. — **All met.**
 
 ## Non-goals (deliberately preserved)
 
