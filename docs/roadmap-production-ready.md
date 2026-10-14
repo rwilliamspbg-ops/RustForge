@@ -34,7 +34,7 @@ testing available locally via `just mutants`.
 | Release hygiene (version, changelog, doc sync) | Phase 1 (✅ 1.4) |
 | Code-under-test evaluation harness | Phase 2 (✅ 2.1) |
 | Differential-testing helpers as code | Phase 2 (✅ 2.2) |
-| Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (2.3) |
+| Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (✅ 2.3) |
 | const/macro test examples | Phase 3 |
 | Domain starter examples (async service, parser, CLI) | Phase 3 |
 | Quality signals (cargo-bloat, binary size, compile times) | Phase 3 |
@@ -151,10 +151,14 @@ workspace `members` — an empty `[workspace]` table detaches it, the
   inputs in the `fuzz` feature.
 - **Impact:** one small module; proptest variant stays feature-gated.
 
-### 2.3 Mutation-testing polish (stays exploratory — hard rule) ⬜
+### 2.3 Mutation-testing polish (stays exploratory — hard rule) ✅
 
-- `just mutants-crate <crate>` / `just mutants-file <path>` via cargo-mutants'
-  path/package filters; `--json` output (ties into 1.3).
+**Shipped** in this changeset:
+
+- `just mutants-crate <crate>` / `just mutants-file <glob>` /
+  `just mutants-diff <diff>` via cargo-mutants' package/file/diff
+  filters; each takes extra cargo-mutants arguments, composing with the
+  `--json`/`-o` output (ties into 1.3).
 - Docs: a documented *soft* reporting pattern (informational workflow comment
   with kill rate, `continue-on-error`) — **never a merge gate**.
 - **Impact:** local tooling; one informational CI job at most.

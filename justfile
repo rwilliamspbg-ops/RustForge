@@ -175,3 +175,18 @@ adopt-test:
 # Exploratory mutation-testing pass, local-only, never wired into CI (install: cargo install cargo-mutants --locked).
 mutants:
     cargo mutants --workspace
+
+# Scoped mutation testing — one crate. Extra cargo-mutants arguments can
+# follow (`just mutants-crate core-tests -- --json`); see
+# docs/best-practices.md ("Scoping it to what changed").
+mutants-crate crate *args:
+    cargo mutants -p {{crate}} {{args}}
+
+# Scoped mutation testing — one file or file glob (globs with a slash
+# match the entire path).
+mutants-file path *args:
+    cargo mutants --file {{path}} {{args}}
+
+# Scoped mutation testing — only code touched by a diff, e.g. a PR's.
+mutants-diff diff *args:
+    cargo mutants --in-diff {{diff}} {{args}}

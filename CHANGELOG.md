@@ -36,6 +36,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   existing `fuzz` feature — no new dependency), does the same over
   `proptest`-generated inputs with automatic shrinking. Both verified to
   *catch* disagreement, not just pass agreeing pairs.
+- **Phase 2.3 of `docs/roadmap-production-ready.md`: mutation-testing
+  polish — scoped, still exploratory.** New `just mutants-crate <crate>`
+  (`cargo mutants -p`), `just mutants-file <glob>`
+  (`cargo mutants --file`), and `just mutants-diff <diff>`
+  (`cargo mutants --in-diff`) recipes, each taking extra cargo-mutants
+  arguments so they compose with the `--json`/`-o` machine-readable
+  output from Phase 1.3. `docs/best-practices.md` gains "Scoping it to
+  what changed" and a documented *soft* reporting pattern — an opt-in,
+  diff-scoped informational workflow that posts the kill rate as a PR
+  comment with `continue-on-error: true` on every step — deliberately
+  NOT part of RustForge's own CI. Mutation testing remains exploratory;
+  no kill-rate gate anywhere.
 
 ## [1.0.0] - 2026-10-14
 

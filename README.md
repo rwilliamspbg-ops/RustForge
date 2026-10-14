@@ -190,7 +190,9 @@ asserting the promise in docs.
   [`docs/evaluation-harness.md`](docs/evaluation-harness.md)), the
   machine-readable report recipes
   (`just test-json`, `just coverage-lcov`, `just clippy-json`,
-  `just deny-json`, `just mutants-list-json` / `just mutants-json`), and
+  `just deny-json`, `just mutants-list-json` / `just mutants-json`), the
+  scoped mutation recipes (`just mutants-crate`, `mutants-file`,
+  `mutants-diff`), and
   more; run `just --list` for
   the full set. `scripts/check.sh` and
   `scripts/coverage.sh` (which the `check`/`coverage` recipes call) work

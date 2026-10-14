@@ -143,5 +143,10 @@ jq '{total: .total_mutants, missed: .missed, caught: .caught}' mutants.out/outco
 `--annotations github` is a third path: findings as GitHub code-review
 annotations (works in CI PRs; the options are `none`/`auto`/`github`).
 
+The scoped `just` recipes (`mutants-crate`, `mutants-file`,
+`mutants-diff`) keep runs fast — see "Scoping it to what changed" in
+[`best-practices.md`](best-practices.md), which also documents the
+opt-in soft-reporting CI pattern (informational comment, never a gate).
+
 Treat all of these as informational, like `just mutants` itself — never
 a gate.

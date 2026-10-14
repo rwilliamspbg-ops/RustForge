@@ -106,6 +106,68 @@ jobs narrowly scoped" below and the `coverage` job's comment in
 `.github/workflows/ci.yml`). Run it periodically against a category you're
 about to refactor, not as a required check.
 
+### Scoping it to what changed
+
+A full-workspace run is slow; scope it to the code you actually touched:
+
+- `just mutants-crate <crate>` — one package (`cargo mutants -p <crate>`).
+- `just mutants-file <glob>` — one file or file glob (`cargo mutants
+  --file <glob>`; globs containing a slash match the entire path).
+- `just mutants-diff <diff>` — only code touched by a diff, e.g. a PR's
+  (`cargo mutants --in-diff <diff>`).
+
+All three take extra `cargo mutants` arguments after the target, so they
+compose with the machine-readable output documented in
+[`docs/machine-readable-outputs.md`](machine-readable-outputs.md) —
+`just mutants-crate core-tests -- --json`, for instance.
+
+### A soft reporting pattern (opt-in, for your own repo)
+
+Mutation results are genuinely useful signal on a PR — how much of
+*this change's* mutants the suite kills — but as a gate they produce
+mutant-shaped test busywork. The documented pattern keeps the signal
+without the gate: an informational job, scoped to the diff, with
+`continue-on-error: true` on every step so nothing can block a merge,
+posting the kill rate as a PR comment. This is deliberately *not* part
+of RustForge's own CI (a fresh copy of the template should have no
+failing jobs it didn't ask for) — add it to your repo if you want the
+signal:
+
+```yaml
+# .github/workflows/mutants-report.yml — OPT-IN, informational only
+name: Mutation report
+on: pull_request
+jobs:
+  mutants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: install cargo-mutants
+        run: cargo install cargo-mutants --locked
+      # Scoped to the PR's diff; continues on missed mutants by design.
+      - name: mutants (informational)
+        continue-on-error: true
+        run: cargo mutants --in-diff "origin/${{ github.base_ref }}...HEAD" 2>&1 | tee mutants.txt
+      - name: post kill-rate comment
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('mutants.txt', 'utf8')
+              .split('\n').filter(l => l.includes('mutants tested')).pop()
+              || 'no summary line';
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: `🧬 Mutation report — informational, not a gate:\n\n\`\`\`\n${summary}\n\`\`\``
+            });
+```
+
+`--iterate` (skip mutants caught in previous runs) is the other knob
+worth knowing for repeat runs on the same code.
+
 ## Run Miri on the UB-prone corners
 
 Ordinary tests — and fuzzing — execute the program natively, so they only
