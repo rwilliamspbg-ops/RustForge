@@ -185,7 +185,10 @@ asserting the promise in docs.
   and why it's scoped the way it is.
 - [`justfile`](justfile) — `just check`, `just test-all`, `just bench`,
   `just fuzz-run <target>`, `just coverage`, `just doc`, `just miri`,
-  `just adopt-test`, the machine-readable report recipes
+  `just adopt-test`, `just eval <path>` (evaluate an external
+  implementation against the fixed harness — see
+  [`docs/evaluation-harness.md`](docs/evaluation-harness.md)), the
+  machine-readable report recipes
   (`just test-json`, `just coverage-lcov`, `just clippy-json`,
   `just deny-json`, `just mutants-list-json` / `just mutants-json`), and
   more; run `just --list` for

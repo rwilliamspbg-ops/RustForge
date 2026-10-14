@@ -443,6 +443,14 @@ jobs:
         run: cargo install cargo-generate --locked
       - name: adoption check (both legs)
         run: ./scripts/adoption-check.sh
+      # Third check: the eval harness itself — wire it to the bundled
+      # sample candidate in a scratch workspace and run the full
+      # evaluation suite (golden + property + compile-fail). Catches
+      # harness rot (broken contract, broken wiring) the same way the two
+      # legs above catch adoption rot, and exercises the exact flow an
+      # adopter's `just eval <path>` runs.
+      - name: eval harness against sample candidate
+        run: ./scripts/eval-harness.sh examples/sample-candidate
 
   reports:
     # Machine-readable reports for automated consumers — CI dashboards,

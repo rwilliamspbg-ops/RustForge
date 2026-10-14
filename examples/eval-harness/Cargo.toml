@@ -1,0 +1,31 @@
+[package]
+name = "eval-harness"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# This example is a standalone workspace of its own — an empty
+# `[workspace]` table makes it its own root, the same detachment pattern
+# `fuzz/` uses. It is deliberately NOT a member of the RustForge
+# workspace: it adds nothing to the template's default
+# `cargo test --workspace`, its dependency graph, or its MSRV surface.
+# See docs/evaluation-harness.md.
+[workspace]
+
+# The harness itself has no dependencies — it is contract plus tests.
+[dependencies]
+
+[dev-dependencies]
+# The candidate under evaluation. `__CANDIDATE_PATH__` is substituted by
+# `just eval <path>` / scripts/eval-harness.sh with the absolute path of
+# the candidate crate; see README.md and docs/evaluation-harness.md.
+# The candidate crate must be named `candidate` — that name is part of
+# the contract (the tests refer to it as `candidate::Impl`).
+candidate = { path = "__CANDIDATE_PATH__" }
+# Pinned to the same versions the RustForge workspace pins for its MSRV
+# (see crates/syntax-tests and crates/fuzz-tests) — standalone crates
+# can't use `workspace = true` inheritance.
+trybuild = { version = "=1.0.111" }
+proptest = { version = "~1.8" }

@@ -88,6 +88,13 @@ deny:
     cargo deny check
     cd fuzz && cargo deny check
 
+# Evaluate an external implementation against the fixed eval harness —
+# golden + property + compile-fail suite against a candidate crate.
+# Usage: just eval examples/sample-candidate [extra cargo test args]
+# See docs/evaluation-harness.md.
+eval candidate *args:
+    ./scripts/eval-harness.sh {{candidate}} {{args}}
+
 # Generate an HTML coverage report (install: rustup component add llvm-tools-preview && cargo install cargo-llvm-cov --locked).
 coverage:
     ./scripts/coverage.sh

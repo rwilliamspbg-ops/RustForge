@@ -1,0 +1,25 @@
+[package]
+name = "candidate"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# Standalone workspace of its own, like examples/eval-harness and fuzz/ —
+# deliberately NOT a member of the RustForge workspace, so it never
+# enters the template's default `cargo test --workspace`.
+[workspace]
+
+[dependencies]
+# Wired to the harness by `just eval` / scripts/eval-harness.sh, which
+# substitutes `__HARNESS_PATH__` with the harness's location in the
+# scratch workspace. The crate must stay named `candidate` — that name
+# is part of the contract (the harness's tests use `candidate::Impl`).
+# The dependency key is `eval-harness` (hyphen) to match the harness's
+# package name exactly — cargo won't match an underscore key against a
+# hyphenated package for path dependencies. Rust code still imports the
+# crate as `eval_harness` (cargo normalizes hyphens to underscores for
+# crate names). See examples/eval-harness/README.md and
+# docs/evaluation-harness.md.
+eval-harness = { path = "__HARNESS_PATH__" }

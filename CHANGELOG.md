@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Phase 2.1 of `docs/roadmap-production-ready.md`: code-under-test
+  evaluation harness.** New standalone example workspaces
+  `examples/eval-harness/` (fixed `Candidate` contract + golden/property/
+  compile-fail suite) and `examples/sample-candidate/` (reference
+  candidate, a hand-rolled parser deliberately different from the
+  reference semantics), wired together by `just eval <path>` /
+  `scripts/eval-harness.sh`: copies both crates into a scratch workspace,
+  substitutes the `__HARNESS_PATH__`/`__CANDIDATE_PATH__` placeholders,
+  and runs the suite — keeping the scratch workspace on failure for
+  inspection. Both crates are detached from the main workspace (empty
+  `[workspace]` tables, the `fuzz/` pattern), so the default
+  `cargo test --workspace` is untouched; the dependency cycle (harness
+  dev-depends on the candidate) is deliberate and legal in Cargo. CI's
+  `adoption` job gained a third step that evaluates the sample candidate
+  end-to-end. New doc `docs/evaluation-harness.md`.
+- `examples/README.md`: documents the standalone-example-workspace
+  pattern the eval harness establishes.
+
 ## [1.0.0] - 2026-10-14
 
 **RustForge 1.0.0** — the Phase 1 release-readiness items from
