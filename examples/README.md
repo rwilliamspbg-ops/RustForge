@@ -8,6 +8,11 @@ standard per-package `examples/` convention:
 
 - `crates/core-tests/examples/fixture_walkthrough.rs` — the shared fixture
   builder pattern other categories reuse.
+- `crates/core-tests/examples/const_eval_walkthrough.rs` — compile-time
+  computation checked at compile time: `const fn`s, static assertions
+  (`const _: () = assert!(...)`), and runtime tests pinning the same
+  values. See "Compile-time assertion" in
+  [`docs/adding-tests.md`](../docs/adding-tests.md).
 - `crates/syntax-tests/examples/parse_walkthrough.rs` — success/failure paths
   through `parse_source`.
 
@@ -35,3 +40,7 @@ graph, and copy out wholesale for reuse.
   golden/property/compile-fail tests, evaluated against any candidate via
   `just eval <path>`. See
   [`docs/evaluation-harness.md`](../docs/evaluation-harness.md).
+- `examples/parser-starter/`, `examples/async-service-starter/`,
+  `examples/cli-starter/` — domain starters (parser, async service,
+  CLI) showing the template's test shapes in real domains. See
+  [`docs/domain-starters.md`](../docs/domain-starters.md).

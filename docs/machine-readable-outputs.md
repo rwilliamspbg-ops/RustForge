@@ -17,6 +17,7 @@ All of these write a file next to wherever you run them (the repo root):
 | `just clippy-json` | clippy | `clippy.json` — diagnostics as JSON | nothing (stable clippy) |
 | `just deny-json` | cargo-deny | `deny.json` — advisory/license/source findings | `cargo install cargo-deny --locked` |
 | `just mutants-list-json` | cargo-mutants | `mutants.json` — the mutants cargo-mutants would test (`--json` applies to `--list` only; outcomes come from the `-o` directory — see below) | `cargo install cargo-mutants --locked` |
+| `just bloat-json` | cargo-bloat | `bloat.json` — code size per function/crate (needs a binary target; see README) | `cargo install cargo-bloat --locked` |
 
 SARIF (the GitHub code-scanning format, below) is emitted by
 `cargo deny --format sarif check` (cargo-deny's `--format` is a global

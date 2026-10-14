@@ -3,6 +3,9 @@
 A practical guide to the common case: adding a test to an *existing*
 category crate. For the rarer case of adding a whole new category crate,
 see "Adding a New Test Category" in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+Generating tests with an LLM? Start from
+[`ai-test-generation.md`](ai-test-generation.md) — the checklist and
+fill-in templates that make generated tests fit these conventions.
 
 ## Where does my test go?
 
@@ -223,6 +226,98 @@ Two things this pattern relies on, both visible in `semantic-tests/src/lib.rs`:
   entirely to the `loom_tests` module, avoids the leak.
 - Keep the thread/worker count small (2, not the 8 a plain-threaded test
   might use) — loom's state space grows explosively with thread count.
+
+## Compile-time and macro-powered checks
+
+Two shapes that aren't in the numbered list above because they're
+*compile-time* rather than runtime — the failure is a build error, not a
+test failure. Both ship as runnable examples in the template.
+
+### Compile-time assertion: `const _: () = assert!(...)`
+
+The const-testing primitive: a static assertion evaluated by the
+compiler. A broken `const fn` fails the **build**, not a test run — the
+strictest check available, and the right one for values that must be
+right by construction (lookup tables, precomputed constants, encoding
+tables).
+
+```rust
+const fn factorial(n: u64) -> u64 {
+    let mut result = 1;
+    let mut i = 2;
+    while i <= n {
+        result *= i;
+        i += 1;
+    }
+    result
+}
+
+// If `factorial` is wrong, this fails to compile:
+// error[E0080]: evaluation panicked: assertion failed: factorial(5) == 121
+const _: () = assert!(factorial(5) == 120);
+```
+
+Run [`crates/core-tests/examples/const_eval_walkthrough.rs`](../crates/core-tests/examples/const_eval_walkthrough.rs)
+(`cargo run -p core-tests --example const_eval_walkthrough`) for the
+full pattern: const fns, static assertions, the same values consumed in
+a const context (a table whose length *is* a const fn's output), and
+runtime `#[test]`s pinning the same numbers — the assertions catch
+accidental breakage at build time; the runtime tests give deliberate
+changes a readable location. Note that plain `cargo test` does *not*
+build examples, so these are checked by `--all-targets` builds — which
+includes CI's clippy step.
+
+### Macro-generated tests: `macro_rules!` as a case-table expander
+
+When a case list grows long, generating one `#[test]` per row beats
+hand-writing a function per case:
+
+```rust
+use syntax_tests::parse_cases;
+
+parse_cases! {
+    accepts_a_simple_function: "fn main() {}" => Ok("fn main() {}");
+    rejects_empty_source: "" => Err("source must not be empty");
+}
+```
+
+[`syntax-tests`](../crates/syntax-tests/src/lib.rs) ships this as
+`parse_cases!` (see its docs for the shape). Two things worth copying
+from it: the macro lives with a **fallback arm that emits
+`compile_error!` with a message about correct usage** — a row missing
+its `=>` value fails with that message instead of the classic
+`macro_rules!` "no rules expected" wall — and that misuse is pinned by a
+trybuild fixture (`ui/fail/macro_case_missing_arrow.rs`, behind the
+`compile-fail` feature) whose expected diagnostic is *our* text, stable
+across compiler versions.
+
+## When to promote a template test into the real library's tests
+
+The category crates test the *template's* fixtures, not your code. As a
+project grows on top of RustForge, the natural end state is that the
+valuable tests live in your library's own crates, with the template's
+categories thinning out. Promote a test when:
+
+- **It tests your domain, not the template's.** The template's
+  `parse_source`/fixture tests demonstrate shapes; once your own code
+  has real tests covering the same behavior in your crates, the
+  template copies are redundant examples. Keep them only as
+  documentation of the pattern (they're small).
+- **A category crate has become your project's test suite.** If
+  `semantic-tests` now holds half your tests for real code, that crate
+  has effectively become part of your project — rename it, or move its
+  contents into your workspace's own crates, and keep the shape
+  conventions (feature gating, categories) that made it useful.
+- **The fixture no longer stands in for anything.** `core-tests`'
+  fixtures exist to be shared; if your crates now have their own
+  fixture layer, migrate the helpers there and drop the dependency.
+
+Promote by moving, not copying: move the test, delete the template
+copy, and keep CI's feature flags honest — a promoted `proptest` test
+still belongs behind a feature flag in your workspace, for the same
+reason it was gated here. The migration section of
+[`docs/adoption.md`](adoption.md) covers the same "incremental, both
+running side by side" discipline from the adopting side.
 
 ## Reusing fixtures
 

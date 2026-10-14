@@ -28,6 +28,31 @@ check locally after changing anything structural (workspace layout, the
 `just`), so a broken adoption path is a CI failure rather than an adopter's
 first experience.
 
+## Minimal adoption (the smallest useful signal)
+
+Not every project needs the full template on day one. The smallest
+adoption that still gives real signal — one crate, no optional
+features, zero extra dependencies beyond the workspace itself:
+
+1. Take `Cargo.toml` (with its `[workspace.package]` and
+   `[workspace.lints.rust]` tables — see the pitfall above) plus
+   `crates/core-tests/` and `crates/syntax-tests/`.
+2. Run `cargo test --workspace`. That's it — `syntax` is a default
+   feature, so the unit tests and doc-tests run with no flags and no
+   heavy dependencies.
+3. When you have an invariant worth checking across many inputs, add
+   `crates/semantic-tests/` (default features, still dependency-free)
+   and write one or two `#[cfg(test)]` unit tests — properties can wait
+   until the input space actually justifies them.
+4. Only then reach for the dependency-pulling features (`fuzz` for
+   `proptest`, `snapshot` for `insta`, `async` for `tokio`) — one
+   category at a time, as each earns its keep.
+
+The one thing *not* to trim: the `[workspace.package]` +
+`[workspace.lints.rust]` inheritance tables. They're what make the
+crates' metadata and lint policy mean anything, and the failure without
+them is the `workspace.package.edition was not defined` pitfall above.
+
 ## Migrating an existing project into RustForge's structure
 
 The steps above assume you're bringing RustForge's crates *into* your

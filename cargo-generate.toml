@@ -13,7 +13,30 @@ cargo_generate_version = ">=0.18.0"
 #     invalid syntax". The other seed files are plain text and substitute
 #     cleanly today; excluding the whole directory means a future binary
 #     seed can't break `cargo generate` either.
-exclude = ["justfile", "fuzz/seed_corpus/**"]
+#   - `examples/cli-starter/src/lib.rs`: its JSON renderer builds the
+#     output with `format!("{{{}}}...")` — the `{{` inside is valid Rust
+#     but *invalid liquid* (a variable tag with no name), which fails
+#     "Substitution skipped, found invalid syntax" during generation.
+#     Single braces are literal text to liquid; doubled ones are not.
+#   - `target/**`: cargo-generate skips directories carrying a
+#     CACHEDIR.TAG but does NOT respect .gitignore, so running
+#     `cargo generate --path .` from a dirty tree feeds binary
+#     `target/debug/.fingerprint/*` files through the liquid parser and
+#     fails the same way. CI checks out clean and never sees this;
+#     local `just adopt-test` runs do, so exclude it defensively.
+#   - `CHANGELOG.md`: changelog prose legitimately discusses `{{...}}`
+#     syntax (this project's history does, repeatedly), and *valid*
+#     liquid passes through unchanged — but a `{{{...}}}` run (e.g.
+#     quoting a `format!` string) is invalid liquid and aborts
+#     generation. Changelogs are documentation, never templated.
+exclude = [
+    "justfile",
+    "fuzz/seed_corpus/**",
+    "examples/cli-starter/src/lib.rs",
+    "target/**",
+    "examples/*/target/**",
+    "CHANGELOG.md",
+]
 
 # RustForge's crate names (core-tests, syntax-tests, semantic-tests, ...)
 # are meaningful and load-bearing — they're matched against real

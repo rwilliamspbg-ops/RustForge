@@ -35,11 +35,11 @@ testing available locally via `just mutants`.
 | Code-under-test evaluation harness | Phase 2 (✅ 2.1) |
 | Differential-testing helpers as code | Phase 2 (✅ 2.2) |
 | Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (✅ 2.3) |
-| const/macro test examples | Phase 3 |
-| Domain starter examples (async service, parser, CLI) | Phase 3 |
-| Quality signals (cargo-bloat, binary size, compile times) | Phase 3 |
-| AI test-generation aids doc | Phase 3 |
-| Minimal-adoption and test-promotion guidance | Phase 3 |
+| const/macro test examples | Phase 3 (✅ 3a) |
+| Domain starter examples (async service, parser, CLI) | Phase 3 (✅ 3b) |
+| Quality signals (cargo-bloat, binary size, compile times) | Phase 3 (✅ 3c) |
+| AI test-generation aids doc | Phase 3 (✅ 3d) |
+| Minimal-adoption and test-promotion guidance | Phase 3 (✅ 3d) |
 
 ## Phase 1 — P0: Release blockers (target: 1.0.0)
 
@@ -169,24 +169,35 @@ via helper; mutants scoping is scriptable.
 
 ## Phase 3 — P2: Breadth & niceties
 
-- **const / macro testing examples:** `core-tests` const-eval example + a
-  `macro_rules!` trybuild pair, wired into existing feature lists (no new CI
-  job — the `no_std_check` precedent).
-- **Domain starter examples** (async service, parser, small CLI) as
+- ✅ **const / macro testing examples:** `core-tests` const-eval example +
+  a `macro_rules!` trybuild pair, wired into existing feature lists (no
+  new CI job — the `no_std_check` precedent). **Shipped** in this
+  changeset: `const_eval_walkthrough.rs` (const fns + static assertions
+  + runtime pins), `syntax-tests`' `parse_cases!` case-table macro with
+  a `compile_error!` fallback arm, and the `macro_case_missing_arrow`
+  trybuild fixture (expected diagnostic is our own text, stable across
+  rustc). Documented under "Compile-time and macro-powered checks" in
+  `docs/adding-tests.md`.
+- ✅ **Domain starter examples** (async service, parser, small CLI) as
   non-member example directories with standalone-workspace instructions —
-  same containment strategy as the eval harness.
-- **Quality signals (opt-in):** `just bloat` (cargo-bloat), binary-size
+  same containment strategy as the eval harness. **Shipped** in this
+  changeset: `examples/parser-starter/`, `examples/async-service-starter/`,
+  `examples/cli-starter/`, documented in `docs/domain-starters.md`.
+- ✅ **Quality signals (opt-in):** `just bloat` (cargo-bloat), binary-size
   tracking, `cargo build --timings` artifacts — docs/local recipes only, no
-  CI gates.
-- **Docs:** "minimal adoption" path (syntax + semantic + a few properties =
+  CI gates. **Shipped** in this changeset: `just bloat` / `bloat-json` /
+  `size` / `timings` recipes, README documentation.
+- ✅ **Docs:** "minimal adoption" path (syntax + semantic + a few properties =
   smallest useful signal) and "promoting template tests into the real
   library's own tests" guidance in `docs/adding-tests.md`.
-- **AI test-generation aids doc:** signature→property recipes, fill-in
+  **Shipped** in this changeset (with the AI aids doc below).
+- ✅ **AI test-generation aids doc:** signature→property recipes, fill-in
   snapshot/trybuild templates, category/fixture recipes for LLM-assisted use.
+  **Shipped** in this changeset: `docs/ai-test-generation.md`.
 
 **Phase 3 exit criteria:** every nice-to-have from the external review is
 either implemented behind opt-in flags or documented as a deliberate
-non-goal.
+non-goal. — **All met.**
 
 ## Non-goals (deliberately preserved)
 

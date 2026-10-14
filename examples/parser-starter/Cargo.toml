@@ -1,0 +1,21 @@
+[package]
+name = "parser-starter"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# Standalone workspace of its own (empty `[workspace]` table — the fuzz/
+# detachment pattern), deliberately NOT a member of the RustForge
+# workspace: it adds nothing to the template's default
+# `cargo test --workspace` or its dependency graph. See
+# docs/domain-starters.md.
+[workspace]
+
+[dependencies]
+
+[dev-dependencies]
+# Same pin the workspace uses (rust-version 1.74 floor) — standalone
+# crates can't use `workspace = true` inheritance.
+proptest = { version = "~1.8" }

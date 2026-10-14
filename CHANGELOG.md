@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-14
+
+**RustForge 1.1.0** — Phases 2 and 3 from
+`docs/roadmap-production-ready.md`, completing the roadmap: the
+code-under-test evaluation harness, differential-testing helpers,
+mutation-testing polish, const/macro testing examples, three domain
+starters, opt-in quality signals, and the AI test-generation aids doc.
+
 ### Added
 
 - **Phase 2.1 of `docs/roadmap-production-ready.md`: code-under-test
@@ -48,6 +56,72 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   comment with `continue-on-error: true` on every step — deliberately
   NOT part of RustForge's own CI. Mutation testing remains exploratory;
   no kill-rate gate anywhere.
+- **Phase 3 of `docs/roadmap-production-ready.md`: const and macro testing
+  examples.** `crates/core-tests/examples/const_eval_walkthrough.rs` (new):
+  const fns plus `const _: () = assert!(...)` static assertions — a broken
+  const fn fails the *build* (`E0080: evaluation panicked: assertion
+  failed: ...`), checked by every `--all-targets` build including CI's
+  clippy — plus the same values consumed in a const context and runtime
+  `#[test]`s pinning them. `syntax-tests` gains `parse_cases!`: a
+  `macro_rules!` case-table expander (one `#[test]` per row) with a
+  fallback arm emitting a helpful `compile_error!`, and a
+  `ui/fail/macro_case_missing_arrow.rs` trybuild fixture whose expected
+  diagnostic is our own message text — stable across compiler versions,
+  unlike the rendered rustc errors the existing fixtures assert on.
+  `docs/adding-tests.md` gains "Compile-time and macro-powered checks";
+  no new CI job (the `compile-fail` job's glob picks the fixture up).
+- **Domain starter examples** (Phase 3): three standalone example
+  workspaces under `examples/`, each detached with an empty `[workspace]`
+  table (the `fuzz/` pattern) so the default `cargo test --workspace`
+  stays untouched: `parser-starter` (arithmetic evaluator — unit tests
+  per construct, proptest panic-freedom/round-trips, total error enum),
+  `async-service-starter` (tokio key-value store — paused-time expiry
+  tests, concurrent inserts, background sweeper with graceful
+  shutdown), and `cli-starter` (`wc`-style CLI — pure logic in the lib,
+  thin `main`, integration tests spawning the real binary, `--json`
+  output). New doc `docs/domain-starters.md` documents the containment
+  pattern and how to copy a starter out.
+- **Quality signals (Phase 3, opt-in, informational — no CI gates):**
+  `just bloat` / `just bloat-json` (cargo-bloat code-size analysis,
+  JSON variant included in the machine-readable outputs), `just size`
+  (release-build + binary-size report), and `just timings` (cargo's
+  built-in compile-time report). README's "Coverage, Reporting, and
+  Debugging" section documents them; the template itself is lib-only,
+  so the recipes target the example binary and document adopter usage.
+- **AI test-generation aids doc (Phase 3):** `docs/ai-test-generation.md`
+  (new) — the checklist every generated test must satisfy (category,
+  shape, feature gating, MSRV, docs, determinism), plus fill-in
+  templates: signature→property derivation (totality, round-trip,
+  invariance, boundary), trybuild compile-fail, snapshot, golden-case
+  table, and category/fixture placement recipes. Points at the
+  evaluation harness for reviewing generated *implementations*.
+  `docs/adoption.md` gains a "Minimal adoption" section (the smallest
+  useful signal: `core-tests` + `syntax-tests`, default features, zero
+  heavy deps), and `docs/adding-tests.md` gains "When to promote a
+  template test into the real library's tests" (promote by moving, keep
+  feature flags honest).
+
+### Fixed
+
+- **CI regressions caught by PR #20's first run** (both Phase 2/3
+  additions, both invisible to local verification on modern stable):
+  - `cargo generate` aborted on `examples/cli-starter/src/lib.rs` —
+    its JSON renderer's `format!("{{{}}}...")` is valid Rust but
+    *invalid liquid* (a `{{` variable tag with no name), failing
+    "Substitution skipped, found invalid syntax" in the `adoption`
+    job. Added to `cargo-generate.toml`'s `[template] exclude`, along
+    with `target/**` / `examples/*/target/**`: cargo-generate skips
+    CACHEDIR.TAG directories but not `.gitignore`, so a dirty tree fed
+    binary `target/debug/.fingerprint/*` files through the same
+    parser (local `just adopt-test` runs hit this; CI's clean checkout
+    didn't).
+  - The `parse_cases!` doc example failed under the MSRV job (Rust
+    1.75) with `E0601: no main function` — 1.75's rustdoc decides
+    whether to wrap a doctest in `fn main()` by *textually* scanning
+    for one, and the example's `"fn main() {}"` string literals made it
+    skip the wrapper. Newer rustdoc parses properly, which is why
+    stable passed. The example now carries an explicit `fn main`
+    wrapper (with a comment explaining why it's load-bearing).
 
 ## [1.0.0] - 2026-10-14
 

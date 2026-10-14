@@ -1,0 +1,24 @@
+[package]
+name = "async-service-starter"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# Standalone workspace of its own (empty `[workspace]` table — the fuzz/
+# detachment pattern), deliberately NOT a member of the RustForge
+# workspace: it adds nothing to the template's default
+# `cargo test --workspace` or its dependency graph. See
+# docs/domain-starters.md.
+[workspace]
+
+[dependencies]
+tokio = { version = "1", features = ["rt", "macros", "time", "sync"] }
+
+[dev-dependencies]
+# `test-util` is what unlocks `#[tokio::test(start_paused = true)]` —
+# the deterministic-clock pattern the tests use. Dev-only: production
+# code never needs it, and feature unification means tests still get
+# the `[dependencies]` feature set too.
+tokio = { version = "1", features = ["test-util"] }
