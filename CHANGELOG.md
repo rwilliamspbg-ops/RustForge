@@ -93,6 +93,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   template test into the real library's tests" (promote by moving, keep
   feature flags honest).
 
+### Fixed
+
+- **CI regressions caught by PR #20's first run** (both Phase 2/3
+  additions, both invisible to local verification on modern stable):
+  - `cargo generate` aborted on `examples/cli-starter/src/lib.rs` —
+    its JSON renderer's `format!("{{{}}}...")` is valid Rust but
+    *invalid liquid* (a `{{` variable tag with no name), failing
+    "Substitution skipped, found invalid syntax" in the `adoption`
+    job. Added to `cargo-generate.toml`'s `[template] exclude`, along
+    with `target/**` / `examples/*/target/**`: cargo-generate skips
+    CACHEDIR.TAG directories but not `.gitignore`, so a dirty tree fed
+    binary `target/debug/.fingerprint/*` files through the same
+    parser (local `just adopt-test` runs hit this; CI's clean checkout
+    didn't).
+  - The `parse_cases!` doc example failed under the MSRV job (Rust
+    1.75) with `E0601: no main function` — 1.75's rustdoc decides
+    whether to wrap a doctest in `fn main()` by *textually* scanning
+    for one, and the example's `"fn main() {}"` string literals made it
+    skip the wrapper. Newer rustdoc parses properly, which is why
+    stable passed. The example now carries an explicit `fn main`
+    wrapper (with a comment explaining why it's load-bearing).
+
 ## [1.0.0] - 2026-10-14
 
 **RustForge 1.0.0** — the Phase 1 release-readiness items from

@@ -40,9 +40,16 @@ pub fn parse_source(source: &str) -> Result<&str, &'static str> {
 /// ```rust
 /// use syntax_tests::parse_cases;
 ///
-/// parse_cases! {
-///     accepts_a_simple_function: "fn main() {}" => Ok("fn main() {}");
-///     rejects_empty_source: "" => Err("source must not be empty");
+/// // The `fn main` wrapper is load-bearing, not decoration: rustdoc
+/// // decides whether to wrap a doctest in `fn main()` by scanning the
+/// // text for an existing one, and the `"fn main() {}"` string literals
+/// // below would make older rustdoc (MSRV 1.75's included) skip the
+/// // wrapper — leaving the doctest with no `main` at all (E0601).
+/// fn main() {
+///     parse_cases! {
+///         accepts_a_simple_function: "fn main() {}" => Ok("fn main() {}");
+///         rejects_empty_source: "" => Err("source must not be empty");
+///     }
 /// }
 /// ```
 #[macro_export]
