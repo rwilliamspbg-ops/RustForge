@@ -220,9 +220,17 @@ Recommended defaults:
   `cargo install cargo-nextest --locked`) — faster on larger suites, one
   process per test; doesn't run doc-tests, so it complements rather than
   replaces `cargo test`.
-- Performance regressions: `just bench-baseline` then `just bench-compare`
-  for a statistically-grounded before/after comparison — see
+- Performance regressions: `just bench-baseline` then `just bench-compare` for
+  a statistically-grounded before/after comparison — see
   [`docs/performance-regression-testing.md`](docs/performance-regression-testing.md).
+- Optional quality signals (opt-in, informational — install the tool once,
+  never gates anything): `just bloat` / `just bloat-json`
+  ([cargo-bloat](https://github.com/RazrFalcon/cargo-bloat) — code size
+  per function/crate; needs a binary target, e.g. `just bloat --bin tally`
+  from `examples/cli-starter`), `just size` (release-build the example
+  binary and report its size; in an adopted workspace, compare your own
+  `target/release/<bin>` across commits), and `just timings` (cargo's
+  built-in compile-time report in `target/cargo-timings/`).
 - Snapshot testing: `cargo insta review` for `syntax-tests`' `snapshot`
   feature — see "Snapshot test" in [`docs/adding-tests.md`](docs/adding-tests.md).
 - Fuzzing beyond the CI smoke-run: corpus/crash minimization, coverage,

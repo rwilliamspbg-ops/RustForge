@@ -37,7 +37,7 @@ testing available locally via `just mutants`.
 | Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (✅ 2.3) |
 | const/macro test examples | Phase 3 (✅ 3a) |
 | Domain starter examples (async service, parser, CLI) | Phase 3 (✅ 3b) |
-| Quality signals (cargo-bloat, binary size, compile times) | Phase 3 |
+| Quality signals (cargo-bloat, binary size, compile times) | Phase 3 (✅ 3c) |
 | AI test-generation aids doc | Phase 3 |
 | Minimal-adoption and test-promotion guidance | Phase 3 |
 
@@ -183,9 +183,10 @@ via helper; mutants scoping is scriptable.
   same containment strategy as the eval harness. **Shipped** in this
   changeset: `examples/parser-starter/`, `examples/async-service-starter/`,
   `examples/cli-starter/`, documented in `docs/domain-starters.md`.
-- ⬜ **Quality signals (opt-in):** `just bloat` (cargo-bloat), binary-size
+- ✅ **Quality signals (opt-in):** `just bloat` (cargo-bloat), binary-size
   tracking, `cargo build --timings` artifacts — docs/local recipes only, no
-  CI gates.
+  CI gates. **Shipped** in this changeset: `just bloat` / `bloat-json` /
+  `size` / `timings` recipes, README documentation.
 - ⬜ **Docs:** "minimal adoption" path (syntax + semantic + a few properties =
   smallest useful signal) and "promoting template tests into the real
   library's own tests" guidance in `docs/adding-tests.md`.

@@ -140,6 +140,35 @@ mutants-json:
     cargo mutants --workspace -o mutants.out
     @echo "==> outcomes: mutants.out/outcomes.json"
 
+# --- Quality signals (opt-in, informational — no CI gates) -------------
+# See "Optional quality signals" in README.md. All three are local
+# tools you install once; none is required by `just check`.
+
+# Code-size analysis per function/crate (install: cargo install cargo-bloat --locked).
+# Needs a binary target: the template itself is lib-only, so measure a
+# starter (`just bloat --bin tally` from examples/cli-starter) or your
+# own binaries (`just bloat --bin <name> --release`).
+bloat *args:
+    cargo bloat {{args}}
+
+# JSON variant of `bloat` for machine consumption (same args; writes bloat.json).
+bloat-json *args:
+    cargo bloat {{args}} --message-format json | tee bloat.json
+
+# Binary-size tracking — release-builds the template's example binary
+# (the workspace itself is lib-only) and reports its size. In an adopted
+# workspace, build your own package (`cargo build --release -p <crate>`)
+# and compare `target/release/<bin>` across commits.
+size:
+    cd examples/cli-starter && cargo build --release
+    ls -lh target/release/
+
+# Compile-time analysis — cargo's built-in `--timings` writes an HTML
+# report to target/cargo-timings/ (which crates/units cost what to
+# compile).
+timings:
+    cargo build --release --workspace --timings
+
 # Build and open rustdoc for the whole workspace.
 doc:
     cargo doc --workspace --all-features --no-deps --open

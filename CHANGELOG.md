@@ -73,6 +73,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   thin `main`, integration tests spawning the real binary, `--json`
   output). New doc `docs/domain-starters.md` documents the containment
   pattern and how to copy a starter out.
+- **Quality signals (Phase 3, opt-in, informational — no CI gates):**
+  `just bloat` / `just bloat-json` (cargo-bloat code-size analysis,
+  JSON variant included in the machine-readable outputs), `just size`
+  (release-build + binary-size report), and `just timings` (cargo's
+  built-in compile-time report). README's "Coverage, Reporting, and
+  Debugging" section documents them; the template itself is lib-only,
+  so the recipes target the example binary and document adopter usage.
 
 ## [1.0.0] - 2026-10-14
 
