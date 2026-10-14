@@ -111,6 +111,13 @@ here is a real bug in one of the two paths; add the minimized input as a
 regression test in whichever implementation was wrong (see "If it finds a
 crash" above), not as a workaround in the fuzz target itself.
 
+For the non-fuzzing forms of the same idea, the template ships helpers:
+`core_tests::differential::assert_impls_agree` checks two implementations
+against each other over *fixed* inputs (no features needed), and
+`fuzz_tests::differential::assert_impls_agree` (behind the `fuzz` feature)
+does it over `proptest`-generated inputs — the natural first step before
+escalating to a continuous cargo-fuzz differential target.
+
 ## Corpus sharing
 
 The committed `fuzz/seed_corpus/<target>/` is deliberately small and

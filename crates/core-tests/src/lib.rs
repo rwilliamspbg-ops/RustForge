@@ -160,6 +160,11 @@ pub fn retry<T, E>(max_tries: usize, mut attempt: impl FnMut() -> Result<T, E>) 
     Err(last_err.expect("loop runs at least once since max_tries > 0"))
 }
 
+/// Differential-testing helpers — two implementations of the same
+/// function, checked against each other input by input. See the module
+/// docs in `src/differential.rs` for when to reach for this.
+pub mod differential;
+
 /// Async-friendly accessors for fixtures, for adopters building `tokio`-based
 /// async test suites. Kept separate from `semantic-tests`, which tests async
 /// *ownership semantics*; this module is about fixture ergonomics.

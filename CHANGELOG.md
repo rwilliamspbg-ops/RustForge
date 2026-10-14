@@ -25,6 +25,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   end-to-end. New doc `docs/evaluation-harness.md`.
 - `examples/README.md`: documents the standalone-example-workspace
   pattern the eval harness establishes.
+- **Phase 2.2 of `docs/roadmap-production-ready.md`: differential-testing
+  helpers as code.** `core_tests::differential::assert_impls_agree`
+  (new, ungated, std-only) checks two implementations of the same
+  function against each other over fixed inputs — the "I rewrote the hot
+  path, prove it still behaves identically" primitive. Its worked
+  examples ship as real tests (closed-form sum vs loop; naive vs
+  sqrt-bounded primality). The property-based companion,
+  `fuzz_tests::differential::assert_impls_agree` (new, behind the
+  existing `fuzz` feature — no new dependency), does the same over
+  `proptest`-generated inputs with automatic shrinking. Both verified to
+  *catch* disagreement, not just pass agreeing pairs.
 
 ## [1.0.0] - 2026-10-14
 

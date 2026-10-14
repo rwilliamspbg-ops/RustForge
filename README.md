@@ -97,11 +97,11 @@ cargo test --workspace
 
 ## Module Responsibilities
 
-- `core-tests`: shared fixtures/helpers for reusable assertions and builders.
+- `core-tests`: shared fixtures/helpers for reusable assertions, builders, and differential testing (`assert_impls_agree`).
 - `syntax-tests`: parser/syntax-facing tests — compile-fail/pass (`trybuild`) and snapshot (`insta`) tests included.
 - `semantic-tests`: ownership, borrowing, traits, and async semantics.
 - `performance-tests`: benchmark/perf guard entry points.
-- `fuzz-tests`: fuzz harness-friendly entry points.
+- `fuzz-tests`: fuzz harness-friendly entry points, plus property-based differential testing (`fuzz` feature).
 - `integration-tests`: end-to-end behavior tests across categories.
 - `edge-cases`: boundary-value and robustness checks.
 

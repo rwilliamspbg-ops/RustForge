@@ -33,7 +33,7 @@ testing available locally via `just mutants`.
 | Machine-readable outputs (JSON/SARIF) | Phase 1 (✅ 1.3) |
 | Release hygiene (version, changelog, doc sync) | Phase 1 (✅ 1.4) |
 | Code-under-test evaluation harness | Phase 2 (✅ 2.1) |
-| Differential-testing helpers as code | Phase 2 (2.2) |
+| Differential-testing helpers as code | Phase 2 (✅ 2.2) |
 | Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (2.3) |
 | const/macro test examples | Phase 3 |
 | Domain starter examples (async service, parser, CLI) | Phase 3 |
@@ -136,15 +136,19 @@ workspace `members` — an empty `[workspace]` table detaches it, the
 - **Impact:** zero default-path deps; opt-in by copying the example;
   modularity preserved by non-membership.
 
-### 2.2 Differential-testing helpers (code, not just docs) ⬜
+### 2.2 Differential-testing helpers (code, not just docs) ✅
+
+**Shipped** in this changeset:
 
 - `core-tests` module `differential`:
   - `assert_impls_agree(a, b, inputs)` — two callables, same inputs, equal
     outputs/errors.
   - Property-based variant reusing `fuzz-tests`' existing `proptest` feature
     (don't duplicate the dependency).
-- Worked examples: parser (reference vs. optimized) and numeric
-  (naive vs. fast) comparisons.
+- Worked examples ship as real tests, not just docs: numeric
+  (closed-form sum vs loop) and primality (naive trial division vs
+  sqrt-bounded optimization) — plus the same two pairs over generated
+  inputs in the `fuzz` feature.
 - **Impact:** one small module; proptest variant stays feature-gated.
 
 ### 2.3 Mutation-testing polish (stays exploratory — hard rule) ⬜

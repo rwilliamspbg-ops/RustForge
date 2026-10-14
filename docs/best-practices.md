@@ -85,6 +85,13 @@ to push into the shared `core-tests` layer.
 - Testing correctness of a hot path but not its speed? A plain unit test
   is enough — save Criterion for when you actually need a regression
   guard, not by default for every function.
+- Rewrote an implementation and need to know it still behaves
+  identically? Use *differential* testing rather than rewriting the old
+  test cases against the new code: `core_tests::differential::
+  assert_impls_agree` (fixed inputs) or, for generated inputs behind the
+  `fuzz` feature, `fuzz_tests::differential::assert_impls_agree`. Keep
+  the reference deliberately simple and obviously correct — its only job
+  is to be trustworthy, not fast.
 
 ## Mutation testing is exploratory, not a gate
 
