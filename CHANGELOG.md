@@ -48,6 +48,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   comment with `continue-on-error: true` on every step — deliberately
   NOT part of RustForge's own CI. Mutation testing remains exploratory;
   no kill-rate gate anywhere.
+- **Phase 3 of `docs/roadmap-production-ready.md`: const and macro testing
+  examples.** `crates/core-tests/examples/const_eval_walkthrough.rs` (new):
+  const fns plus `const _: () = assert!(...)` static assertions — a broken
+  const fn fails the *build* (`E0080: evaluation panicked: assertion
+  failed: ...`), checked by every `--all-targets` build including CI's
+  clippy — plus the same values consumed in a const context and runtime
+  `#[test]`s pinning them. `syntax-tests` gains `parse_cases!`: a
+  `macro_rules!` case-table expander (one `#[test]` per row) with a
+  fallback arm emitting a helpful `compile_error!`, and a
+  `ui/fail/macro_case_missing_arrow.rs` trybuild fixture whose expected
+  diagnostic is our own message text — stable across compiler versions,
+  unlike the rendered rustc errors the existing fixtures assert on.
+  `docs/adding-tests.md` gains "Compile-time and macro-powered checks";
+  no new CI job (the `compile-fail` job's glob picks the fixture up).
 
 ## [1.0.0] - 2026-10-14
 

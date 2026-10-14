@@ -224,6 +224,70 @@ Two things this pattern relies on, both visible in `semantic-tests/src/lib.rs`:
 - Keep the thread/worker count small (2, not the 8 a plain-threaded test
   might use) — loom's state space grows explosively with thread count.
 
+## Compile-time and macro-powered checks
+
+Two shapes that aren't in the numbered list above because they're
+*compile-time* rather than runtime — the failure is a build error, not a
+test failure. Both ship as runnable examples in the template.
+
+### Compile-time assertion: `const _: () = assert!(...)`
+
+The const-testing primitive: a static assertion evaluated by the
+compiler. A broken `const fn` fails the **build**, not a test run — the
+strictest check available, and the right one for values that must be
+right by construction (lookup tables, precomputed constants, encoding
+tables).
+
+```rust
+const fn factorial(n: u64) -> u64 {
+    let mut result = 1;
+    let mut i = 2;
+    while i <= n {
+        result *= i;
+        i += 1;
+    }
+    result
+}
+
+// If `factorial` is wrong, this fails to compile:
+// error[E0080]: evaluation panicked: assertion failed: factorial(5) == 121
+const _: () = assert!(factorial(5) == 120);
+```
+
+Run [`crates/core-tests/examples/const_eval_walkthrough.rs`](../crates/core-tests/examples/const_eval_walkthrough.rs)
+(`cargo run -p core-tests --example const_eval_walkthrough`) for the
+full pattern: const fns, static assertions, the same values consumed in
+a const context (a table whose length *is* a const fn's output), and
+runtime `#[test]`s pinning the same numbers — the assertions catch
+accidental breakage at build time; the runtime tests give deliberate
+changes a readable location. Note that plain `cargo test` does *not*
+build examples, so these are checked by `--all-targets` builds — which
+includes CI's clippy step.
+
+### Macro-generated tests: `macro_rules!` as a case-table expander
+
+When a case list grows long, generating one `#[test]` per row beats
+hand-writing a function per case:
+
+```rust
+use syntax_tests::parse_cases;
+
+parse_cases! {
+    accepts_a_simple_function: "fn main() {}" => Ok("fn main() {}");
+    rejects_empty_source: "" => Err("source must not be empty");
+}
+```
+
+[`syntax-tests`](../crates/syntax-tests/src/lib.rs) ships this as
+`parse_cases!` (see its docs for the shape). Two things worth copying
+from it: the macro lives with a **fallback arm that emits
+`compile_error!` with a message about correct usage** — a row missing
+its `=>` value fails with that message instead of the classic
+`macro_rules!` "no rules expected" wall — and that misuse is pinned by a
+trybuild fixture (`ui/fail/macro_case_missing_arrow.rs`, behind the
+`compile-fail` feature) whose expected diagnostic is *our* text, stable
+across compiler versions.
+
 ## Reusing fixtures
 
 Don't duplicate fixture/builder code across categories — put it in

@@ -1,0 +1,9 @@
+error: parse_cases! rows must look like `name: "input" => Ok("expected");` (a trailing `=>` value per row) — see the macro docs
+  --> tests/ui/fail/macro_case_missing_arrow.rs:11:1
+   |
+11 | / parse_cases! {
+12 | |     missing_expected: "fn f() {}" ;
+13 | | }
+   | |_^
+   |
+   = note: this error originates in the macro `parse_cases` (in Nightly builds, run with -Z macro-backtrace for more info)
