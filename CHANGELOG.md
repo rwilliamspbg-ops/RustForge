@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-14
+
+**RustForge 1.0.0** — the Phase 1 release-readiness items from
+`docs/roadmap-production-ready.md` land together: the adoption path is
+verified in CI rather than just documented, Miri is a first-class
+citizen for undefined-behavior detection, and machine-readable reports
+(JSON/LCOV/SARIF) exist for automated consumers. CI is now a 15-job
+pipeline.
+
 ### Added
 
 - **Phase 1.1 of `docs/roadmap-production-ready.md`: the adoption path is
@@ -68,6 +77,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     report, its consumer, and where to get it.
 
   CI is now a 15-job pipeline (README/`ci/README.md` updated to match).
+
+### Removed
+
+- **Phase 1.4 of `docs/roadmap-production-ready.md`: release hygiene.**
+  Version cut from `0.2.0-alpha` to `1.0.0`. Removed the placeholder root
+  `tests/README.md` (and the `tests/` line in README's workspace layout) —
+  it documented a "top-level integration tests when a root package is
+  present" flow that can't exist in this virtual workspace (there is no
+  root `[package]`), and adopters copying `crates/` into their own
+  workspace never use this repo's root `tests/` directory anyway.
+  Adopters who want top-level integration tests add a root package (or a
+  `tests/` dir) in *their* workspace, per `docs/adoption.md`.
 
 ## [0.2.0-alpha] - 2026-08-01
 

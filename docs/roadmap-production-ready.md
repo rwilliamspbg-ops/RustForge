@@ -31,7 +31,7 @@ testing available locally via `just mutants`.
 | Adoption path never verified in CI | Phase 1 (✅ 1.1) |
 | Miri (UB detection) — absent entirely | Phase 1 (✅ 1.2) |
 | Machine-readable outputs (JSON/SARIF) | Phase 1 (✅ 1.3) |
-| Release hygiene (version, changelog, doc sync) | Phase 1 (1.4) |
+| Release hygiene (version, changelog, doc sync) | Phase 1 (✅ 1.4) |
 | Code-under-test evaluation harness | Phase 2 (2.1) |
 | Differential-testing helpers as code | Phase 2 (2.2) |
 | Mutation-testing polish (scoping, JSON, soft reporting) | Phase 2 (2.3) |
@@ -100,18 +100,21 @@ New doc `docs/machine-readable-outputs.md` + `just` recipes; pure tooling:
   `continue-on-error`).
 - **Impact:** CI artifacts only; default path untouched.
 
-### 1.4 Release hygiene ⬜
+### 1.4 Release hygiene ✅
 
-- Cut `0.2.0-alpha` → `1.0.0` once 1.1–1.3 land; CHANGELOG `Unreleased`
-  section consumed.
-- Sync README / `ci/README.md` / CONTRIBUTING for every new job and recipe
-  (standing repo convention — CI is the source of truth).
-- Remove the placeholder root `tests/README.md` (documents a "root package"
-  flow that can't exist in a virtual workspace — confusing for adopters).
+**Shipped** in this changeset:
+
+- Cut `0.2.0-alpha` → `1.0.0` — the CHANGELOG's `Unreleased` section is
+  now `[1.0.0] - 2026-10-14` with a fresh empty `Unreleased` above it.
+- README / `ci/README.md` / CONTRIBUTING synced for every new job and
+  recipe (standing repo convention — CI is the source of truth).
+- Removed the placeholder root `tests/README.md` (and the `tests/` line in
+  README's workspace layout) — it documented a "root package" flow that
+  can't exist in a virtual workspace.
 
 **Phase 1 exit criteria:** `cargo generate` output passes its own tests in
 CI; Miri job green; JSON artifacts downloadable from a PR; 1.0.0 cut with a
-complete CHANGELOG.
+complete CHANGELOG. — **All met** (CI runs on the PR).
 
 ## Phase 2 — P1: Evaluation / AI-readiness
 

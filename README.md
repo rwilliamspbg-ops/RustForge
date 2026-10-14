@@ -67,7 +67,6 @@ my-test-suite/
 │   ├── fuzz-tests/
 │   ├── integration-tests/
 │   └── edge-cases/
-├── tests/
 ├── examples/
 ├── fuzz/
 ├── ci/
