@@ -19,6 +19,15 @@
 7. Use `scripts/coverage.sh` (needs `cargo-llvm-cov`) to spot untested paths
    before adding new categories or expanding existing ones.
 
+Both paths in step 1 are verified in CI on every PR — the `adoption` job
+exercises the `cargo generate` output *and* the copy-`crates/`-into-a-host-
+workspace flow end-to-end (see [`ci/README.md`](ci/README.md)). Run the same
+check locally after changing anything structural (workspace layout, the
+`[workspace.package]`/`[workspace.lints.rust]` tables, crate paths) with
+`just adopt-test` (`scripts/adoption-check.sh` directly if you don't have
+`just`), so a broken adoption path is a CI failure rather than an adopter's
+first experience.
+
 ## Migrating an existing project into RustForge's structure
 
 The steps above assume you're bringing RustForge's crates *into* your

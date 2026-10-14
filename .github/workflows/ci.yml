@@ -322,3 +322,36 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: cargo doc
         run: cargo doc --workspace --all-features --no-deps
+
+  adoption:
+    # Verifies the template's core promise — that a fresh adopter actually
+    # gets a passing `cargo test --workspace` — instead of the docs just
+    # claiming it. Two legs, one per adoption path in docs/adoption.md:
+    #   1. `cargo generate --path .` output runs `cargo test --workspace`
+    #      (the "fresh git history" path; nothing is templated or renamed —
+    #      see cargo-generate.toml's comment).
+    #   2. RustForge's `crates/` copied into a synthetic host workspace —
+    #      its own root package with `[workspace.package]` and
+    #      `[workspace.lints.rust]` tables present — runs
+    #      `cargo test --workspace` (the "copy crates/ into your existing
+    #      workspace" path, including the one gotcha that broke during
+    #      manual testing, see docs/adoption.md).
+    #
+    # Stable-only, same reasoning as the `loom`/`trybuild` jobs: the
+    # adoption flow is structural (workspace members, inheritance tables,
+    # crate paths), not toolchain-sensitive, and the default-feature run
+    # is the lightest possible suite — so repeating it across the `test`
+    # matrix would multiply cost without adding signal. The job is
+    # dominated by the one-time `cargo install cargo-generate`, not by the
+    # test run itself. `scripts/adoption-check.sh` mirrors both legs
+    # locally (`just adopt-test`).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install cargo-generate
+        run: cargo install cargo-generate --locked
+      - name: adoption check (both legs)
+        run: ./scripts/adoption-check.sh

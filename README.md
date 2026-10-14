@@ -156,7 +156,7 @@ asserting the promise in docs.
 ## Tooling & Automation
 
 - Native `cargo test` is first-class.
-- CI is a 12-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
+- CI is a 13-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
   × ubuntu/windows/macos/linux-arm64 matrix, a stable-only `nextest` job, a stable-only
   `trybuild` job, a stable-only `loom` job (concurrency-permutation testing,
   see [`docs/adding-tests.md`](docs/adding-tests.md)), a nightly
@@ -170,7 +170,12 @@ asserting the promise in docs.
   [cargo-hack](https://github.com/taiki-e/cargo-hack)), a nightly
   `minimal-versions` job (tests against the lowest dependency versions each
   `Cargo.toml` constraint allows, not just the newest resolvable ones), a
-  `cargo-deny` supply-chain job, and a stable-only `docs` job. See
+  `cargo-deny` supply-chain job, and a stable-only `docs` job. A
+  stable-only `adoption` job additionally verifies the template's core
+  promise end-to-end — both adoption paths from
+  [`docs/adoption.md`](docs/adoption.md) (`cargo generate` output, and
+  `crates/` copied into a synthetic host workspace) are actually run and
+  tested, so "easy to adopt" is a CI-checked claim, not a README one. See
   [`ci/README.md`](ci/README.md) for what each one does and why it's
   scoped the way it is.
 - [`justfile`](justfile) — `just check`, `just test-all`, `just bench`,

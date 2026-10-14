@@ -91,8 +91,9 @@ doc:
 doc-check:
     RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 
-# Chain everything CI runs (fmt, clippy, tests, nextest, doc-check, deny) into one local pre-push command.
-full-ci: fmt-check clippy-all test-all nextest doc-check
+# Chain everything CI runs (fmt, clippy, tests, nextest, doc-check, adoption
+# check, deny) into one local pre-push command.
+full-ci: fmt-check clippy-all test-all nextest doc-check adopt-test
     #!/usr/bin/env bash
     set -euo pipefail
     if cargo deny --version >/dev/null 2>&1; then
@@ -107,6 +108,12 @@ full-ci: fmt-check clippy-all test-all nextest doc-check
 # Release-build every optional feature as a readiness check (no publish step — every crate is `publish = false`).
 release-dry-run:
     cargo build --workspace --release --features async,no_std,perf,fuzz,edge,snapshot
+
+# Verify the adoption promise end-to-end: `cargo generate --path .` output (leg
+# skipped if cargo-generate isn't installed) plus `crates/` copied into a
+# synthetic host workspace — mirrors CI's `adoption` job.
+adopt-test:
+    ./scripts/adoption-check.sh
 
 # Exploratory mutation-testing pass, local-only, never wired into CI (install: cargo install cargo-mutants --locked).
 mutants:

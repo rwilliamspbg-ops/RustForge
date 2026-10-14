@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Phase 1.1 of `docs/roadmap-production-ready.md`: the adoption path is
+  now verified in CI, not just documented.** New stable-only `adoption` job
+  (`.github/workflows/ci.yml`) exercises both adoption flows from
+  `docs/adoption.md` end-to-end: `cargo generate --path .` output runs
+  `cargo test --workspace`, and RustForge's `crates/` copied into a
+  synthetic host workspace (own root package, `[workspace.package]` and
+  `[workspace.lints.rust]` inheritance tables present — the one gotcha that
+  broke during manual testing) does the same.
+  `scripts/adoption-check.sh` mirrors both legs locally via
+  `just adopt-test` (the `cargo-generate` leg self-skips when the tool
+  isn't installed). CI is now a 13-job pipeline (README/`ci/README.md`
+  updated to match).
+- `cargo-generate.toml`: added a `[template] exclude` list so
+  `cargo generate` actually works on this template. Two file classes
+  needed it: the `justfile` (its `just` `{{target}}` variable syntax is
+  valid liquid and would have been silently substituted away) and
+  `fuzz/seed_corpus/**` (the binary `utf8_input/invalid_bytes` seed fails
+  liquid parsing with "found invalid syntax"). Excluded files are still
+  copied to the output — just verbatim. Previously `cargo generate --git`
+  aborted on the binary seed file.
+
 ## [0.2.0-alpha] - 2026-08-01
 
 **Phase 8 — verification-focused CI additions:**

@@ -96,6 +96,24 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   broken intra-doc links and other rustdoc-only lints. Added after a
   broken `` [`slice::dedup`] `` link shipped uncaught — clippy's own
   `-D warnings` doesn't cover rustdoc's separate lint pass.
+- **`adoption` job** — runs on stable only: verifies the template's core
+  promise (a fresh adopter gets a passing `cargo test --workspace`) by
+  exercising both adoption paths from [`docs/adoption.md`](../docs/adoption.md)
+  end-to-end via `scripts/adoption-check.sh`: (1) `cargo generate --path .`
+  output, then `cargo test --workspace` in the generated copy — the
+  "fresh git history" path; (2) RustForge's `crates/` copied into a
+  synthetic host workspace (its own root package, with the
+  `[workspace.package]` / `[workspace.lints.rust]` inheritance tables the
+  copied crates depend on — the one gotcha that broke during manual
+  testing), then `cargo test --workspace` there — the "copy `crates/` into
+  your existing workspace" path. Isolated from the `test` matrix for the
+  same reason as `loom`/`trybuild`: the adoption flow is structural
+  (workspace members, inheritance tables, crate paths), not
+  toolchain-sensitive, and the default-feature run is the lightest
+  possible suite. The job's cost is dominated by the one-time
+  `cargo install cargo-generate`. `just adopt-test` runs the same two legs
+  locally (the `cargo-generate` leg self-skips when the tool isn't
+  installed, like the deny step in `just full-ci`).
 
 ## Running the same checks locally
 
