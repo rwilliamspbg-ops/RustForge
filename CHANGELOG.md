@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-14
+
+**RustForge 1.1.0** — Phases 2 and 3 from
+`docs/roadmap-production-ready.md`, completing the roadmap: the
+code-under-test evaluation harness, differential-testing helpers,
+mutation-testing polish, const/macro testing examples, three domain
+starters, opt-in quality signals, and the AI test-generation aids doc.
+
 ### Added
 
 - **Phase 2.1 of `docs/roadmap-production-ready.md`: code-under-test
