@@ -28,6 +28,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   liquid parsing with "found invalid syntax"). Excluded files are still
   copied to the output — just verbatim. Previously `cargo generate --git`
   aborted on the binary seed file.
+- **Phase 1.2 of `docs/roadmap-production-ready.md`: Miri is now a
+  first-class citizen.** New nightly-only `miri` CI job
+  (`.github/workflows/ci.yml`) runs `cargo +nightly miri test -p
+  core-tests -p semantic-tests` — interpreting the suite to detect
+  undefined behavior and data races that native execution and fuzzing
+  miss (`shared_counter_after_workers`' `Arc<Mutex>` pattern is exactly
+  what Miri is built to check). `just miri` mirrors it locally (needs
+  `rustup toolchain install nightly --component miri`). Scoped to two
+  crates with default features because Miri can't run the other
+  categories' tooling (tokio's runtime, loom's instrumentation,
+  Criterion benches, trybuild's UI tests). See "Run Miri on the UB-prone
+  corners" in `docs/best-practices.md`.
+- **Phase 1.3 of `docs/roadmap-production-ready.md`: machine-readable
+  outputs for automated consumers** (CI dashboards, AI evaluators,
+  anything that parses instead of reading logs):
+  - `nextest` job now emits `--message-format libtest-json` (with
+    `NEXTEST_EXPERIMENTAL_LIBTEST_JSON=1` — the format is experimental in
+    nextest; uploaded as the `nextest-json` artifact); the `coverage` job
+    additionally emits LCOV (`coverage-lcov` artifact).
+  - `deny` job emits `cargo deny --format sarif check` (the `--format`
+    flag is global in cargo-deny, before the subcommand) and uploads it
+    to GitHub code scanning (`security-events: write` scoped to the job,
+    `continue-on-error` so forks/private repos without GHAS don't get a
+    red job they didn't ask for).
+  - New stable-only `reports` job: clippy diagnostics as JSON
+    (`clippy-json` artifact) plus SARIF via `clippy-sarif` uploaded to
+    code scanning — re-runs clippy deliberately (keeps the `test` job's
+    gate human-readable) and omits `-D warnings` (reports findings,
+    doesn't gate on them).
+  - Local recipes: `just test-json`, `just coverage-lcov`, `just
+    clippy-json`, `just deny-json`, `just mutants-list-json` /
+    `just mutants-json` (cargo-mutants' `--json` serializes the mutant
+    list only; run outcomes come from `-o mutants.out`'s
+    `outcomes.json` — see `docs/machine-readable-outputs.md`). Mutation
+    results stay local-only — mutation testing remains exploratory,
+    never a CI gate.
+  - New doc `docs/machine-readable-outputs.md` indexes every structured
+    report, its consumer, and where to get it.
+
+  CI is now a 15-job pipeline (README/`ci/README.md` updated to match).
 
 ## [0.2.0-alpha] - 2026-08-01
 

@@ -99,6 +99,33 @@ jobs narrowly scoped" below and the `coverage` job's comment in
 `.github/workflows/ci.yml`). Run it periodically against a category you're
 about to refactor, not as a required check.
 
+## Run Miri on the UB-prone corners
+
+Ordinary tests — and fuzzing — execute the program natively, so they only
+catch undefined behavior that happens to misbehave on your machine.
+[`Miri`](https://github.com/rust-lang/miri) *interprets* the compiled
+program and detects UB directly: invalid pointer arithmetic, alignment
+violations, aliasing breaks — plus data races in std-threaded code —
+whether or not the hardware would have noticed. `just miri` runs the
+default-feature suite for `core-tests` and `semantic-tests` under it (needs
+`rustup toolchain install nightly --component miri`); CI's `miri` job does
+the same. `shared_counter_after_workers` is exactly the `Arc<Mutex>`
+concurrency Miri is built to check.
+
+Scoping matters more here than anywhere else in the workflow:
+
+- **Miri can't run the other categories' tooling.** tokio's runtime (the
+  `async` feature), loom's `--cfg loom` instrumentation, Criterion benches,
+  and trybuild's rustc-spawning UI tests all fail or hang under
+  interpretation. Default features keep all of them out.
+- **It runs 10-50x slower than native execution**, and time, env, and
+  filesystem access are emulated — tests that depend on wall-clock timing
+  or real file I/O are unreliable under it.
+- When code genuinely is UB-prone (`unsafe_code` is forbidden
+  workspace-wide, so realistically: pointer arithmetic, hand-rolled
+  synchronization, `transmute`s added to a category), keep it in
+  `core-tests` or `semantic-tests` so `just miri` covers it.
+
 ## `cargo-semver-checks` doesn't apply here
 
 Every crate in this workspace sets `publish = false` — RustForge is meant to

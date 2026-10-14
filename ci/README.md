@@ -15,11 +15,17 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   actually verifies the "usable under `#![no_std]`" claim on
   `no_std_support`, not just the code review/convention it used to rely on.
 - **`nextest` job** — runs on stable only: `cargo nextest run --workspace
-  --features async,no_std,perf,fuzz,edge`. Demonstrates
+  --features async,no_std,perf,fuzz,edge --message-format libtest-json` >
+  `nextest.json` (with `NEXTEST_EXPERIMENTAL_LIBTEST_JSON=1` — the JSON
+  format is experimental in nextest and exits 95 without it), uploaded as
+  the `nextest-json` artifact. Demonstrates
   [cargo-nextest](https://nexte.st/) as an opt-in alternative runner;
   `cargo test` stays the primary, dependency-free supported path (see
-  `CONTRIBUTING.md`). Note nextest doesn't run doc-tests — a real nextest
-  limitation, not something to fix here.
+  `CONTRIBUTING.md`). The JSON event stream is the machine-readable test
+  report — see [`docs/machine-readable-outputs.md`](../docs/machine-readable-outputs.md).
+  Output is redirected (not piped) so a test failure still fails the step.
+  Note nextest doesn't run doc-tests — a real nextest limitation, not
+  something to fix here.
 - **`trybuild` job** — runs on stable only: `cargo test -p syntax-tests
   --features compile-fail`. Isolated from the `test` job's multi-toolchain
   matrix because trybuild's UI tests assert on `rustc`'s exact diagnostic
@@ -35,6 +41,19 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   than a normal test run, so repeating it 6x across the matrix would add
   cost without adding signal. See "Concurrency-permutation test" in
   [`docs/adding-tests.md`](../docs/adding-tests.md).
+- **`miri` job** — runs on nightly (with the `miri` component) only:
+  `cargo +nightly miri test -p core-tests -p semantic-tests`, interpreting
+  the program to detect undefined behavior and data races that native
+  execution — and fuzzing — miss. `shared_counter_after_workers`'
+  `Arc<Mutex>` pattern is exactly what Miri is built to check. Isolated
+  and scoped like `loom`/`trybuild`: UB detection is toolchain/OS-
+  independent and interpretation is 10-50x slower than native execution,
+  so repeating it across the `test` matrix would add cost without signal.
+  Scoped to two crates with default features because Miri can't run the
+  other categories' tooling (tokio's runtime, loom's instrumentation,
+  Criterion benches, trybuild's rustc-spawning UI tests). See "Run Miri
+  on the UB-prone corners" in
+  [`docs/best-practices.md`](../docs/best-practices.md).
 - **`fuzz-build` job** — runs on nightly only: installs `cargo-fuzz`,
   builds the targets under `fuzz/` (`cargo fuzz build`), then does a short
   (10-second) smoke run of each target seeded from the committed
@@ -52,9 +71,12 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   coverage too, not just `#[test]`s — it's implemented via rustdoc's
   unstable `--persist-doctests`, which only the nightly compiler accepts.
   Informational — doesn't gate merges on a threshold; see
-  `scripts/coverage.sh` to run the same thing locally. Also has an
-  optional, off-by-default coverage % badge step — see "Coverage badge
-  setup" below.
+  `scripts/coverage.sh` to run the same thing locally. Also emits an LCOV
+  report (`coverage-lcov` artifact) — the standard machine-readable
+  coverage format, see
+  [`docs/machine-readable-outputs.md`](../docs/machine-readable-outputs.md).
+  Also has an optional, off-by-default coverage % badge step — see
+  "Coverage badge setup" below.
 - **`udeps` job** — runs on nightly only: `cargo udeps --workspace
   --all-features`, checking for unused dependencies. Informational —
   `continue-on-error: true` on the check step, since cargo-udeps analyzes
@@ -89,7 +111,12 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   version claims are about.
 - **`deny` job** — runs `cargo-deny check` (licenses, security advisories,
   banned/duplicate dependencies, untrusted sources) against both the main
-  workspace and the detached `fuzz/` workspace. Config lives in
+  workspace and the detached `fuzz/` workspace, then emits
+  `cargo deny --format sarif check` (`--format` is a global cargo-deny
+  flag, placed before the subcommand) and uploads it to GitHub code scanning
+  (`security-events: write` is scoped to this job; the upload is
+  `continue-on-error` since code scanning needs to be enabled on the
+  repo). Config lives in
   [`deny.toml`](../deny.toml).
 - **`docs` job** — runs on stable only: `cargo doc --workspace
   --all-features --no-deps` with `RUSTDOCFLAGS=-D warnings`, catching
@@ -114,6 +141,19 @@ CI helpers and notes for running fmt, clippy, tests, and optional nightly jobs.
   `cargo install cargo-generate`. `just adopt-test` runs the same two legs
   locally (the `cargo-generate` leg self-skips when the tool isn't
   installed, like the deny step in `just full-ci`).
+- **`reports` job** — runs on stable only: emits the machine-readable
+  reports automated consumers (CI dashboards, AI evaluators, code
+  scanning) need — clippy diagnostics as JSON (`clippy-json` artifact)
+  plus SARIF uploaded to GitHub code scanning via
+  `github/codeql-action/upload-sarif`. Deliberately re-runs clippy instead
+  of capturing JSON in the `test` job so the gate there stays
+  human-readable, and deliberately omits `-D warnings` so the job
+  *reports* findings rather than gating on them (the `test` job is the
+  gate). `security-events: write` is scoped to this job; the SARIF upload
+  is `continue-on-error` since code scanning must be enabled on the repo
+  (fails on forks / private repos without GitHub Advanced Security).
+  Adopters who don't consume machine-readable reports can drop the whole
+  job. See [`docs/machine-readable-outputs.md`](../docs/machine-readable-outputs.md).
 
 ## Running the same checks locally
 

@@ -28,9 +28,9 @@ testing available locally via `just mutants`.
 
 | Gap | Phase |
 |---|---|
-| Adoption path never verified in CI | Phase 1 (🚧 1.1) |
-| Miri (UB detection) — absent entirely | Phase 1 (1.2) |
-| Machine-readable outputs (JSON/SARIF) | Phase 1 (1.3) |
+| Adoption path never verified in CI | Phase 1 (✅ 1.1) |
+| Miri (UB detection) — absent entirely | Phase 1 (✅ 1.2) |
+| Machine-readable outputs (JSON/SARIF) | Phase 1 (✅ 1.3) |
 | Release hygiene (version, changelog, doc sync) | Phase 1 (1.4) |
 | Code-under-test evaluation harness | Phase 2 (2.1) |
 | Differential-testing helpers as code | Phase 2 (2.2) |
@@ -62,26 +62,39 @@ in CI, not just documented. **Shipped** in this changeset:
 - **Impact:** default path untouched; +1 stable-only CI job (~3 min,
   dominated by the `cargo install cargo-generate` step); no MSRV effect.
 
-### 1.2 Miri as a first-class citizen ⬜
+### 1.2 Miri as a first-class citizen ✅
+
+Undefined behavior that happens to work on your machine is invisible to
+native execution — tests, and even fuzzing, only catch UB that
+misbehaves on the host. Miri *interprets* the program and detects it
+directly. **Shipped** in this changeset:
 
 - `just miri`: `cargo +nightly miri test` scoped to default features (Miri
   can't run tokio/loom/criterion/trybuild — documented).
 - Nightly-only `miri` CI job: `cargo +nightly miri test -p core-tests -p
-  semantic-tests` (semantic without `async`/`loom`).
+  semantic-tests` (semantic without `async`/`loom` features).
 - Docs section in `docs/best-practices.md`: what Miri catches that tests and
   fuzzing miss (UB in unsafe code, alignment, data races under the Miri
   scheduler).
 - **Impact:** zero runtime dependencies; nightly toolchain only; no
   default-path cost.
 
-### 1.3 Structured, machine-readable outputs ⬜
+### 1.3 Structured, machine-readable outputs ✅
+
+Text logs are for humans; automated consumers — CI dashboards, code
+scanning, coverage services, AI evaluators — need something parseable.
+**Shipped** in this changeset:
 
 New doc `docs/machine-readable-outputs.md` + `just` recipes; pure tooling:
 
-- `just test-json`: `cargo nextest run --workspace --features … --message-format json`
+- `just test-json`: `cargo nextest run --workspace --features … --message-format libtest-json`
 - `just coverage-lcov`: `cargo llvm-cov --lcov --output-path lcov.info` (+ `--json`)
-- `just mutants-json`: `cargo mutants --json` (scoped per 2.3)
-- `just clippy-json` / `just deny-json`: `--message-format=json`
+- `just mutants-list-json` / `just mutants-json`: `cargo mutants --list
+  --json` for the mutant list; outcomes via `-o mutants.out`
+  (`outcomes.json`) — scoped per 2.3
+- `just clippy-json`: `cargo clippy … --message-format json`;
+  `just deny-json`: `cargo deny --format json check` (`--format` is
+  global in cargo-deny, before the subcommand)
 - CI: upload JSON artifacts from the test/coverage jobs; SARIF upload for
   clippy + deny via `github/codeql-action/upload-sarif` (opt-in,
   `continue-on-error`).
