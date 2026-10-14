@@ -67,7 +67,6 @@ my-test-suite/
 │   ├── fuzz-tests/
 │   ├── integration-tests/
 │   └── edge-cases/
-├── tests/
 ├── examples/
 ├── fuzz/
 ├── ci/
@@ -156,26 +155,41 @@ asserting the promise in docs.
 ## Tooling & Automation
 
 - Native `cargo test` is first-class.
-- CI is a 12-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
-  × ubuntu/windows/macos/linux-arm64 matrix, a stable-only `nextest` job, a stable-only
-  `trybuild` job, a stable-only `loom` job (concurrency-permutation testing,
-  see [`docs/adding-tests.md`](docs/adding-tests.md)), a nightly
+- CI is a 15-job pipeline: `fmt`+`clippy`+tests across a stable/beta/nightly
+  × ubuntu/windows/macos/linux-arm64 matrix, a stable-only `nextest` job
+  (JSON event stream, uploaded as an artifact — see
+  [`docs/machine-readable-outputs.md`](docs/machine-readable-outputs.md)),
+  a stable-only `trybuild` job, a stable-only `loom` job
+  (concurrency-permutation testing, see
+  [`docs/adding-tests.md`](docs/adding-tests.md)), a nightly `miri` job
+  (interprets the suite to detect undefined behavior and data races — see
+  [`docs/best-practices.md`](docs/best-practices.md)), a nightly
   `fuzz-build` job (build + short smoke run per target on every push/PR,
   plus a longer campaign on the daily schedule — see
   [`docs/fuzzing.md`](docs/fuzzing.md)), a nightly `coverage` job
   (`--doctests` included, so `///` examples count too — needs nightly for
-  rustdoc's unstable `--persist-doctests`), a nightly `udeps` job
-  (informational, unused-dependency check), an MSRV job, a stable-only
-  `hack` job (per-crate feature-powerset testing via
+  rustdoc's unstable `--persist-doctests`; LCOV artifact too), a nightly
+  `udeps` job (informational, unused-dependency check), an MSRV job, a
+  stable-only `hack` job (per-crate feature-powerset testing via
   [cargo-hack](https://github.com/taiki-e/cargo-hack)), a nightly
   `minimal-versions` job (tests against the lowest dependency versions each
   `Cargo.toml` constraint allows, not just the newest resolvable ones), a
-  `cargo-deny` supply-chain job, and a stable-only `docs` job. See
-  [`ci/README.md`](ci/README.md) for what each one does and why it's
-  scoped the way it is.
+  `cargo-deny` supply-chain job (SARIF uploaded to code scanning), and a
+  stable-only `docs` job. A stable-only `adoption` job additionally
+  verifies the template's core promise end-to-end — both adoption paths
+  from [`docs/adoption.md`](docs/adoption.md) (`cargo generate` output,
+  and `crates/` copied into a synthetic host workspace) are actually run
+  and tested, so "easy to adopt" is a CI-checked claim, not a README one.
+  A stable-only `reports` job emits clippy JSON + SARIF for machine
+  consumption. See [`ci/README.md`](ci/README.md) for what each one does
+  and why it's scoped the way it is.
 - [`justfile`](justfile) — `just check`, `just test-all`, `just bench`,
-  `just fuzz-run <target>`, `just coverage`, `just doc`, and more; run
-  `just --list` for the full set. `scripts/check.sh` and
+  `just fuzz-run <target>`, `just coverage`, `just doc`, `just miri`,
+  `just adopt-test`, the machine-readable report recipes
+  (`just test-json`, `just coverage-lcov`, `just clippy-json`,
+  `just deny-json`, `just mutants-list-json` / `just mutants-json`), and
+  more; run `just --list` for
+  the full set. `scripts/check.sh` and
   `scripts/coverage.sh` (which the `check`/`coverage` recipes call) work
   standalone too, no `just` required. See [`scripts/README.md`](scripts/README.md).
 - Runnable examples live under each crate's `examples/` directory, e.g. `cargo run -p core-tests --example fixture_walkthrough`. See [`examples/README.md`](examples/README.md).

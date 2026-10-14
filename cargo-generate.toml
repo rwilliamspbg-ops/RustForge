@@ -1,6 +1,20 @@
 [template]
 cargo_generate_version = ">=0.18.0"
 
+# `exclude` (mirroring Cargo's include/exclude) makes cargo-generate copy
+# these files verbatim — skipping liquid substitution — while still
+# including them in the output. Two kinds of file need it:
+#
+#   - `justfile`: `just`'s own `{{target}}` variable syntax is *valid*
+#     liquid too, so it would be substituted away (rendering as empty),
+#     silently corrupting the generated copy's `fuzz-run` recipe.
+#   - `fuzz/seed_corpus/**`: `utf8_input/invalid_bytes` is a binary fuzz
+#     seed — running it through the liquid parser fails with "found
+#     invalid syntax". The other seed files are plain text and substitute
+#     cleanly today; excluding the whole directory means a future binary
+#     seed can't break `cargo generate` either.
+exclude = ["justfile", "fuzz/seed_corpus/**"]
+
 # RustForge's crate names (core-tests, syntax-tests, semantic-tests, ...)
 # are meaningful and load-bearing — they're matched against real
 # `--features <name>` flags (see `[workspace.metadata.rustforge]` in the

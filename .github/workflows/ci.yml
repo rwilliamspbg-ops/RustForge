@@ -67,14 +67,34 @@ jobs:
     # "works under nextest". Note nextest doesn't run doc-tests — that's a
     # real, known nextest limitation, not something to fix here.
     runs-on: ubuntu-latest
+    env:
+      # nextest's libtest JSON output is gated as experimental; without
+      # this the run exits 95 instead of emitting JSON.
+      NEXTEST_EXPERIMENTAL_LIBTEST_JSON: "1"
     steps:
       - uses: actions/checkout@v7
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
       - uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
+      # `--message-format libtest-json` emits nextest's machine-readable
+      # event stream (one JSON object per test start/finish, in libtest's
+      # JSON shape) — the format CI dashboards, automated evaluators, and
+      # `jq`-based reporting consume. The redirect captures stdout only:
+      # the JSON lands in the artifact while nextest's human-readable
+      # output (on stderr) still shows in the log. A redirect rather than
+      # a pipe on purpose — a pipe's exit code would be tee's, masking
+      # test failures; a redirect keeps cargo's exit code as the step's,
+      # so this still gates. `cat` echoes the JSON into the log too.
       - name: nextest
-        run: cargo nextest run --workspace --features async,no_std,perf,fuzz,edge,snapshot
+        run: |
+          cargo nextest run --workspace --features async,no_std,perf,fuzz,edge,snapshot --message-format libtest-json > nextest.json
+          cat nextest.json
+      - name: upload nextest JSON report
+        uses: actions/upload-artifact@v7
+        with:
+          name: nextest-json
+          path: nextest.json
 
   trybuild:
     runs-on: ubuntu-latest
@@ -100,6 +120,36 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: loom concurrency-permutation tests
         run: cargo test -p semantic-tests --features loom
+
+  miri:
+    # Runs the default-feature test suite for core-tests and semantic-tests
+    # under Miri, which interprets the program instead of running it
+    # natively and detects undefined behavior — plus data races in
+    # std-threaded code — that ordinary tests and even fuzzing miss.
+    # `shared_counter_after_workers` is exactly the Arc<Mutex> concurrency
+    # Miri is built to check.
+    #
+    # Nightly-only, ubuntu-only, scoped like the `loom`/`trybuild` jobs: UB
+    # detection is toolchain/OS-independent, and Miri runs 10-50x slower
+    # than native execution, so repeating it across the `test` matrix would
+    # multiply cost without adding signal.
+    #
+    # Scoped to two crates with default features because Miri can't run the
+    # other categories' tooling: tokio's runtime (the `async` feature),
+    # loom's `--cfg loom` instrumentation, Criterion benches, and
+    # trybuild's rustc-spawning UI tests all fail or hang under
+    # interpretation. See "Run Miri on the UB-prone corners" in
+    # docs/best-practices.md.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust (nightly + miri)
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+      - name: miri test (core-tests + semantic-tests)
+        run: cargo +nightly miri test -p core-tests -p semantic-tests
 
   fuzz-build:
     runs-on: ubuntu-latest
@@ -165,11 +215,23 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: generate coverage report
         run: cargo llvm-cov --workspace --all-features --doctests --html
+      # LCOV is the standard machine-readable coverage format — consumed
+      # by coverage services (codecov, coveralls, ...) and anything that
+      # wants to diff coverage programmatically instead of reading HTML.
+      # A second instrumented run is the cost of having both formats; a
+      # fresh copy of this template can drop either format's run.
+      - name: generate lcov report
+        run: cargo llvm-cov --workspace --all-features --doctests --lcov --output-path lcov.info
       - name: upload coverage report
         uses: actions/upload-artifact@v7
         with:
           name: coverage-html
           path: target/llvm-cov/html
+      - name: upload lcov report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-lcov
+          path: lcov.info
       # Optional coverage % badge: only runs once a maintainer has created a
       # gist and configured `vars.COVERAGE_GIST_ID` + `secrets.COVERAGE_GIST_SECRET`
       # (see the "Coverage badge setup" section in ci/README.md). Skipped
@@ -294,6 +356,12 @@ jobs:
         run: cargo minimal-versions test --workspace --exclude performance-tests
 
   deny:
+    # `security-events: write` is needed only by the SARIF upload step at
+    # the bottom; it's scoped to this job so the workflow's top-level
+    # `contents: read` permission stays minimal everywhere else.
+    permissions:
+      contents: read
+      security-events: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -305,6 +373,26 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
           manifest-path: fuzz/Cargo.toml
+      # SARIF is GitHub code scanning's native format, so deny's findings
+      # (advisories, license bans, untrusted sources) land directly in the
+      # Security tab instead of only in this job's log. Needs the CLI
+      # (the action doesn't emit SARIF). `--format` is a *global*
+      # cargo-deny flag — it goes before the `check` subcommand, and
+      # `--manifest-path` likewise.
+      - name: install cargo-deny
+        run: cargo install cargo-deny --locked
+      - name: generate SARIF (main workspace)
+        run: cargo deny --manifest-path Cargo.toml --format sarif check > deny.sarif
+      # `continue-on-error` because SARIF upload requires code scanning to
+      # be enabled on the repo — it fails on forks and on private repos
+      # without GitHub Advanced Security. Same opt-in posture as the
+      # coverage badge step: a fresh copy of this template gets no red
+      # job it didn't ask for.
+      - name: upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: deny.sarif
+        continue-on-error: true
 
   docs:
     # Catches broken intra-doc links and other rustdoc-only lints that
@@ -322,3 +410,87 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: cargo doc
         run: cargo doc --workspace --all-features --no-deps
+
+  adoption:
+    # Verifies the template's core promise — that a fresh adopter actually
+    # gets a passing `cargo test --workspace` — instead of the docs just
+    # claiming it. Two legs, one per adoption path in docs/adoption.md:
+    #   1. `cargo generate --path .` output runs `cargo test --workspace`
+    #      (the "fresh git history" path; nothing is templated or renamed —
+    #      see cargo-generate.toml's comment).
+    #   2. RustForge's `crates/` copied into a synthetic host workspace —
+    #      its own root package with `[workspace.package]` and
+    #      `[workspace.lints.rust]` tables present — runs
+    #      `cargo test --workspace` (the "copy crates/ into your existing
+    #      workspace" path, including the one gotcha that broke during
+    #      manual testing, see docs/adoption.md).
+    #
+    # Stable-only, same reasoning as the `loom`/`trybuild` jobs: the
+    # adoption flow is structural (workspace members, inheritance tables,
+    # crate paths), not toolchain-sensitive, and the default-feature run
+    # is the lightest possible suite — so repeating it across the `test`
+    # matrix would multiply cost without adding signal. The job is
+    # dominated by the one-time `cargo install cargo-generate`, not by the
+    # test run itself. `scripts/adoption-check.sh` mirrors both legs
+    # locally (`just adopt-test`).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install cargo-generate
+        run: cargo install cargo-generate --locked
+      - name: adoption check (both legs)
+        run: ./scripts/adoption-check.sh
+
+  reports:
+    # Machine-readable reports for automated consumers — CI dashboards,
+    # AI evaluators, anything that parses instead of reading logs: clippy
+    # diagnostics as JSON plus SARIF for GitHub code scanning. Text logs
+    # stay the human-facing gate; this job is purely additive output,
+    # scoped stable-only like the other opt-in report jobs.
+    #
+    # Deliberately re-runs clippy instead of capturing JSON in the `test`
+    # job: the gate there stays human-readable and unchanged, and a
+    # separate job keeps this output for adopters to drop entirely. Note
+    # the missing `-D warnings` — this job's purpose is to *report*
+    # findings, not to gate on them (the `test` job is the gate), so it
+    # completes even when there are warnings and still uploads them.
+    runs-on: ubuntu-latest
+    # `security-events: write` is needed only by the SARIF upload step;
+    # scoped here so the workflow's top-level `contents: read` stays
+    # minimal everywhere else.
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: install clippy-sarif
+        run: cargo install clippy-sarif --locked
+      # Redirect, not pipe: a pipe's exit code would be clippy-sarif's
+      # (or tee's), masking clippy's own — see the same reasoning in the
+      # `nextest` job.
+      - name: clippy (JSON diagnostics)
+        run: cargo clippy --workspace --all-targets --features async,no_std,perf,fuzz,edge,snapshot --message-format json > clippy.json
+      - name: convert clippy JSON to SARIF
+        run: clippy-sarif --input clippy.json --output clippy.sarif
+      - name: upload clippy JSON report
+        uses: actions/upload-artifact@v7
+        with:
+          name: clippy-json
+          path: clippy.json
+      # `continue-on-error` because SARIF upload requires code scanning to
+      # be enabled on the repo — it fails on forks and on private repos
+      # without GitHub Advanced Security. Same opt-in posture as the deny
+      # job's SARIF step.
+      - name: upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: clippy.sarif
+        continue-on-error: true
