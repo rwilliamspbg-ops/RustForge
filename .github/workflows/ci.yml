@@ -389,7 +389,7 @@ jobs:
       # coverage badge step: a fresh copy of this template gets no red
       # job it didn't ask for.
       - name: upload SARIF to code scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: deny.sarif
         continue-on-error: true
@@ -498,7 +498,7 @@ jobs:
       # without GitHub Advanced Security. Same opt-in posture as the deny
       # job's SARIF step.
       - name: upload SARIF to code scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: clippy.sarif
         continue-on-error: true
